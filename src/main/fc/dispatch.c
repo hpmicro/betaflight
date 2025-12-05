@@ -45,7 +45,7 @@ void dispatchEnable(void)
     dispatchEnabled = true;
 }
 
-void dispatchProcess(uint32_t currentTimeUs)
+void dispatchProcess(timeUs_t currentTimeUs)
 {
     for (dispatchEntry_t **p = &head; *p; ) {
         if (cmp32(currentTimeUs, (*p)->delayedUntil) < 0)

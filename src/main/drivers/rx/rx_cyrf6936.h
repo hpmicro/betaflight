@@ -205,7 +205,7 @@ extern bool isError;
 
 bool cyrf6936Init(void);
 
-bool cyrf6936RxFinished(uint32_t *timeStamp);
+bool cyrf6936RxFinished(uint64_t *timeStamp);
 
 void cyrf6936WriteRegister(const uint8_t address, const uint8_t data);
 void cyrf6936WriteBlock(const uint8_t address, const uint8_t *data, const uint8_t length);

@@ -49,9 +49,9 @@
 #define WS2811_DMA_BUF_CACHE_ALIGN_BYTES  ((WS2811_DMA_BUF_BYTES + 0x20) & ~0x1f)
 // Size of array to create a cache aligned buffer
 #define WS2811_DMA_BUF_CACHE_ALIGN_LENGTH (WS2811_DMA_BUF_CACHE_ALIGN_BYTES / sizeof(uint32_t))
-extern uint32_t ledStripDMABuffer[WS2811_DMA_BUF_CACHE_ALIGN_LENGTH];
+extern uint64_t ledStripDMABuffer[WS2811_DMA_BUF_CACHE_ALIGN_LENGTH];
 #else
-extern uint32_t ledStripDMABuffer[WS2811_DMA_BUFFER_SIZE];
+extern uint64_t ledStripDMABuffer[WS2811_DMA_BUFFER_SIZE];
 #endif
 
 #define WS2811_TIMER_MHZ           48
@@ -68,7 +68,7 @@ void ws2811LedStripInit(ioTag_t ioTag);
 void ws2811LedStripEnable(void);
 
 bool ws2811LedStripHardwareInit(ioTag_t ioTag);
-void ws2811LedStripDMAEnable(void);
+void ws2811LedStripDMAEnable(uint32_t bytes);
 
 bool ws2811UpdateStrip(ledStripFormatRGB_e ledFormat, uint8_t brightness);
 
@@ -87,5 +87,5 @@ bool isWS2811LedStripReady(void);
 
 extern volatile bool ws2811LedDataTransferInProgress;
 
-extern uint16_t BIT_COMPARE_1;
-extern uint16_t BIT_COMPARE_0;
+extern uint64_t BIT_COMPARE_1;
+extern uint64_t BIT_COMPARE_0;

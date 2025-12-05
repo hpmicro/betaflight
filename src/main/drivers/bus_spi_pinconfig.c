@@ -36,7 +36,9 @@
 #include "drivers/rcc.h"
 
 #include "pg/bus_spi.h"
-
+#ifdef HPMicro
+#include "hpm_clock_drv.h"
+#endif
 const spiHardware_t spiHardware[] = {
 #ifdef STM32F4
     {
@@ -430,6 +432,60 @@ const spiHardware_t spiHardware[] = {
         .rcc = RCC_APB2(SPI4),
     },
 #endif
+#ifdef HPM6750
+    {
+        .device = SPIDEV_1,
+        .reg = SPI1,
+        .sckPins = {
+            { DEFIO_TAG_E(PZ3), IOC_PZ03_FUNC_CTL_SPI0_SCLK | IOC_PAD_FUNC_CTL_LOOP_BACK_SET(1), BIOC_PZ03_FUNC_CTL_SOC_PZ_03 | IOC_PAD_FUNC_CTL_LOOP_BACK_MASK, IOC_PAD_PAD_CTL_DS_SET(6) | IOC_PAD_PAD_CTL_PE_SET(1), -1},
+        },
+        .misoPins = {
+            { DEFIO_TAG_E(PZ5),  IOC_PZ05_FUNC_CTL_SPI0_MISO, BIOC_PZ05_FUNC_CTL_SOC_PZ_05, IOC_PAD_PAD_CTL_DS_SET(6) | IOC_PAD_PAD_CTL_PE_SET(1), -1},
+        },
+        .mosiPins = {
+            { DEFIO_TAG_E(PZ4),  IOC_PZ04_FUNC_CTL_SPI0_MOSI, BIOC_PZ04_FUNC_CTL_SOC_PZ_04, IOC_PAD_PAD_CTL_DS_SET(6) | IOC_PAD_PAD_CTL_PE_SET(1), -1},
+        },
+        .af= 5,
+        .rcc = clock_spi0,
+    
+    },
+    {
+        .device = SPIDEV_2,
+        .reg = SPI2,
+        .sckPins = {
+            { DEFIO_TAG_E(PD31), IOC_PD31_FUNC_CTL_SPI1_SCLK | IOC_PAD_FUNC_CTL_LOOP_BACK_SET(1), -1, IOC_PAD_PAD_CTL_DS_SET(6) | IOC_PAD_PAD_CTL_PE_SET(1), -1},
+        },
+        .misoPins = {
+            { DEFIO_TAG_E(PD30),  IOC_PD30_FUNC_CTL_SPI1_MISO, -1, IOC_PAD_PAD_CTL_DS_SET(6) | IOC_PAD_PAD_CTL_PE_SET(1), -1},
+        },
+        .mosiPins = {
+            { DEFIO_TAG_E(PE4),  IOC_PE04_FUNC_CTL_SPI1_MOSI, -1, IOC_PAD_PAD_CTL_DS_SET(6) | IOC_PAD_PAD_CTL_PE_SET(1), -1},
+        },
+        .af= 5,
+        .rcc = clock_spi1,
+    },
+    {
+        .device = SPIDEV_3,
+        .reg = SPI3,
+        .sckPins = {
+            { DEFIO_TAG_E(PB0), IOC_PB00_FUNC_CTL_SPI2_SCLK | IOC_PAD_FUNC_CTL_LOOP_BACK_SET(1), -1, IOC_PAD_PAD_CTL_DS_SET(6) | IOC_PAD_PAD_CTL_PE_SET(1), -1},
+            { DEFIO_TAG_E(PB21) ,IOC_PB21_FUNC_CTL_SPI2_SCLK | IOC_PAD_FUNC_CTL_LOOP_BACK_SET(1), -1, IOC_PAD_PAD_CTL_DS_SET(6) | IOC_PAD_PAD_CTL_PE_SET(1), -1},
+            { DEFIO_TAG_E(PE27),  IOC_PE27_FUNC_CTL_SPI2_SCLK | IOC_PAD_FUNC_CTL_LOOP_BACK_SET(1), -1, IOC_PAD_PAD_CTL_DS_SET(6) | IOC_PAD_PAD_CTL_PE_SET(1), -1},
+        },
+        .misoPins = {
+            { DEFIO_TAG_E(PA31),  IOC_PA31_FUNC_CTL_SPI2_MISO, -1, IOC_PAD_PAD_CTL_DS_SET(6) | IOC_PAD_PAD_CTL_PE_SET(1), -1},
+            { DEFIO_TAG_E(PB25),  IOC_PB25_FUNC_CTL_SPI2_MISO, -1, IOC_PAD_PAD_CTL_DS_SET(6) | IOC_PAD_PAD_CTL_PE_SET(1), -1},
+            { DEFIO_TAG_E(PE28),  IOC_PE28_FUNC_CTL_SPI2_MISO, -1, IOC_PAD_PAD_CTL_DS_SET(6) | IOC_PAD_PAD_CTL_PE_SET(1), -1},
+        },
+        .mosiPins = {
+            { DEFIO_TAG_E(PA27),  IOC_PA27_FUNC_CTL_SPI2_MOSI, -1, IOC_PAD_PAD_CTL_DS_SET(6) | IOC_PAD_PAD_CTL_PE_SET(1), -1},
+            { DEFIO_TAG_E(PB22),  IOC_PB22_FUNC_CTL_SPI2_MOSI, -1, IOC_PAD_PAD_CTL_DS_SET(6) | IOC_PAD_PAD_CTL_PE_SET(1), -1},
+            { DEFIO_TAG_E(PE30),  IOC_PE30_FUNC_CTL_SPI2_MOSI, -1, IOC_PAD_PAD_CTL_DS_SET(6) | IOC_PAD_PAD_CTL_PE_SET(1), -1},
+        },
+        .af= 5,
+        .rcc = clock_spi2,
+    },
+#endif
 };
 
 void spiPinConfigure(const spiPinConfig_t *pConfig)
@@ -449,18 +505,27 @@ void spiPinConfigure(const spiPinConfig_t *pConfig)
                 pDev->sck = hw->sckPins[pindex].pin;
 #if defined(USE_PIN_AF)
                 pDev->sckAF = hw->sckPins[pindex].af;
+#ifdef HPMicro
+                pDev->sckAF2 = hw->sckPins[pindex].af2;
+#endif
 #endif
             }
             if (pConfig[device].ioTagMiso == hw->misoPins[pindex].pin) {
                 pDev->miso = hw->misoPins[pindex].pin;
 #if defined(USE_PIN_AF)
                 pDev->misoAF = hw->misoPins[pindex].af;
+#ifdef HPMicro
+                pDev->misoAF2 = hw->misoPins[pindex].af2;
+#endif
 #endif
             }
             if (pConfig[device].ioTagMosi == hw->mosiPins[pindex].pin) {
                 pDev->mosi = hw->mosiPins[pindex].pin;
 #if defined(USE_PIN_AF)
                 pDev->mosiAF = hw->mosiPins[pindex].af;
+#ifdef HPMicro
+                pDev->mosiAF2 = hw->mosiPins[pindex].af2;
+#endif
 #endif
             }
         }

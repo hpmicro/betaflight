@@ -76,7 +76,7 @@ void pgResetFn_sdcardConfig(sdcardConfig_t *config)
     config->mode = SDCARD_MODE_NONE;
 #endif
 
-#if defined(STM32H7) && defined(USE_SDCARD_SDIO) // H7 only for now, likely should be applied to F4/F7 too
+#if (defined(STM32H7) || defined(HPMicro)) && defined(USE_SDCARD_SDIO) // H7 only for now, likely should be applied to F4/F7 too
     config->mode = SDCARD_MODE_SDIO;
 #endif
 

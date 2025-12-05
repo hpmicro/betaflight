@@ -456,7 +456,7 @@ float pidCompensateThrustLinearization(float throttle);
 
 #ifdef USE_AIRMODE_LPF
 void pidUpdateAirmodeLpf(float currentOffset);
-float pidGetAirmodeThrottleOffset();
+float pidGetAirmodeThrottleOffset(void);
 #endif
 
 #ifdef UNIT_TEST
@@ -465,7 +465,7 @@ extern float axisError[XYZ_AXIS_COUNT];
 void applyItermRelax(const int axis, const float iterm,
     const float gyroRate, float *itermErrorRate, float *currentPidSetpoint);
 void applyAbsoluteControl(const int axis, const float gyroRate, float *currentPidSetpoint, float *itermErrorRate);
-void rotateItermAndAxisError();
+void rotateItermAndAxisError(void);
 float pidLevel(int axis, const pidProfile_t *pidProfile,
     const rollAndPitchTrims_t *angleTrim, float rawSetpoint, float horizonLevelStrength);
 float calcHorizonLevelStrength(void);
@@ -474,7 +474,7 @@ float calcHorizonLevelStrength(void);
 void dynLpfDTermUpdate(float throttle);
 void pidSetItermReset(bool enabled);
 float pidGetPreviousSetpoint(int axis);
-float pidGetDT();
-float pidGetPidFrequency();
+float pidGetDT(void);
+float pidGetPidFrequency(void);
 
 float dynLpfCutoffFreq(float throttle, uint16_t dynLpfMin, uint16_t dynLpfMax, uint8_t expo);

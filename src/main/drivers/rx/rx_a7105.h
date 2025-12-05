@@ -111,4 +111,4 @@ uint32_t A7105ReadID(void);
 void A7105ReadFIFO(uint8_t *data, uint8_t num);
 void A7105WriteFIFO(uint8_t *data, uint8_t num);
 
-bool A7105RxTxFinished(uint32_t *timeStamp);
+bool A7105RxTxFinished(uint64_t *timeStamp);

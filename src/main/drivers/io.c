@@ -46,6 +46,26 @@ GPIO_TypeDef* IO_GPIO(IO_t io)
     return ioRec->gpio;
 }
 
+#ifdef HPMicro
+uint32_t IO_IOC_INDEX(IO_t io)
+{
+    const ioRec_t *ioRec = IO_Rec(io);
+    return ioRec->ioc_index;
+}
+
+uint32_t IO_PIOC_INDEX(IO_t io)
+{
+    const ioRec_t *ioRec = IO_Rec(io);
+    return ioRec->pioc_index;
+}
+
+uint32_t IO_BIOC_INDEX(IO_t io)
+{
+    const ioRec_t *ioRec = IO_Rec(io);
+    return ioRec->bioc_index;
+}
+#endif
+
 uint16_t IO_Pin(IO_t io)
 {
     const ioRec_t *ioRec = IO_Rec(io);
@@ -57,7 +77,12 @@ int IO_GPIOPortIdx(IO_t io)
     if (!io) {
         return -1;
     }
+#ifdef HPMicro
+    uint32_t ioc_idx = IO_IOC_INDEX(io);
+    return GPIO_GET_PORT_INDEX(ioc_idx);
+#else
     return (((size_t)IO_GPIO(io) - GPIOA_BASE) >> 10);
+#endif
 }
 
 int IO_EXTI_PortSourceGPIO(IO_t io)
@@ -76,7 +101,12 @@ int IO_GPIOPinIdx(IO_t io)
     if (!io) {
         return -1;
     }
+#ifdef HPMicro
+    uint32_t ioc_idx = IO_IOC_INDEX(io);
+    return GPIO_GET_PIN_INDEX(ioc_idx);
+#else
     return 31 - __builtin_clz(IO_Pin(io));
+#endif
 }
 
 int IO_EXTI_PinSource(IO_t io)
@@ -130,8 +160,13 @@ bool IOIsFreeOrPreinit(IO_t io)
 }
 
 #if DEFIO_PORT_USED_COUNT > 0
+#ifdef HPMicro
+static const uint32_t ioDefUsedMask[DEFIO_PORT_USED_COUNT] = { DEFIO_PORT_USED_LIST };
+static const uint32_t ioDefUsedOffset[DEFIO_PORT_USED_COUNT] = { DEFIO_PORT_OFFSET_LIST };
+#else
 static const uint16_t ioDefUsedMask[DEFIO_PORT_USED_COUNT] = { DEFIO_PORT_USED_LIST };
 static const uint8_t ioDefUsedOffset[DEFIO_PORT_USED_COUNT] = { DEFIO_PORT_OFFSET_LIST };
+#endif
 #else
 // Avoid -Wpedantic warning
 static const uint16_t ioDefUsedMask[1] = {0};
@@ -149,7 +184,115 @@ ioRec_t ioRecs[1];
 void IOInitGlobal(void)
 {
     ioRec_t *ioRec = ioRecs;
-
+#ifdef HPMicro
+#if defined(DEFIO_PORT_A_USED_COUNT) && (DEFIO_PORT_A_USED_COUNT > 0)
+    for (unsigned pin = 0; pin < 32; pin++) {
+        if (DEFIO_PORT_A_USED_MASK & (1 << pin)) {
+            ioRec->gpio = (GPIO_TypeDef *)(GPIOA_BASE);   // ports are 0x400 apart
+            ioRec->pin = 1 << pin;
+            ioRec->ioc_index = IOC_PAD_PA00 + pin;
+            ioRec->pioc_index = (uint32_t)-1;
+            ioRec->bioc_index = (uint32_t)-1;
+            ioRec++;
+        }
+    }
+#endif
+#if defined(DEFIO_PORT_B_USED_COUNT) && (DEFIO_PORT_B_USED_COUNT > 0)
+    for (unsigned pin = 0; pin < 32; pin++) {
+        if (DEFIO_PORT_B_USED_MASK & (1 << pin)) {
+            ioRec->gpio = (GPIO_TypeDef *)(GPIOA_BASE + 0X10);   // ports are 0x400 apart
+            ioRec->pin = 1 << pin;
+            ioRec->ioc_index = IOC_PAD_PB00 + pin;
+            ioRec->pioc_index = (uint32_t)-1;
+            ioRec->bioc_index = (uint32_t)-1;
+            ioRec++;
+        }
+    }
+#endif
+#if defined(DEFIO_PORT_C_USED_COUNT) && (DEFIO_PORT_C_USED_COUNT > 0)
+    for (unsigned pin = 0; pin < 32; pin++) {
+        if (DEFIO_PORT_C_USED_MASK & (1 << pin)) {
+            ioRec->gpio = (GPIO_TypeDef *)(GPIOA_BASE + 0x20);   // ports are 0x400 apart
+            ioRec->pin = 1 << pin;
+            ioRec->ioc_index = IOC_PAD_PC00 + pin;
+            ioRec->pioc_index = (uint32_t)-1;
+            ioRec->bioc_index = (uint32_t)-1;
+            ioRec++;
+        }
+    }
+#endif
+#if defined(DEFIO_PORT_D_USED_COUNT) && (DEFIO_PORT_D_USED_COUNT > 0)
+    for (unsigned pin = 0; pin < 32; pin++) {
+        if (DEFIO_PORT_D_USED_MASK & (1 << pin)) {
+            ioRec->gpio = (GPIO_TypeDef *)(GPIOA_BASE + 0x30);   // ports are 0x400 apart
+            ioRec->pin = 1 << pin;
+            ioRec->ioc_index = IOC_PAD_PD00 + pin;
+            ioRec->pioc_index = (uint32_t)-1;
+            ioRec->bioc_index = (uint32_t)-1;
+            ioRec++;
+        }
+    }
+#endif
+#if defined(DEFIO_PORT_E_USED_COUNT) && (DEFIO_PORT_E_USED_COUNT > 0)
+    for (unsigned pin = 0; pin < 32; pin++) {
+        if (DEFIO_PORT_E_USED_MASK & (1 << pin)) {
+            ioRec->gpio = (GPIO_TypeDef *)(GPIOA_BASE + 0x40);   // ports are 0x400 apart
+            ioRec->pin = 1 << pin;
+            ioRec->ioc_index = IOC_PAD_PE00 + pin;
+            ioRec->pioc_index = (uint32_t)-1;
+            ioRec->bioc_index = (uint32_t)-1;
+            ioRec++;
+        }
+    }
+#endif
+#if defined(DEFIO_PORT_F_USED_COUNT) && (DEFIO_PORT_F_USED_COUNT > 0)
+    for (unsigned pin = 0; pin < 32; pin++) {
+        if (DEFIO_PORT_F_USED_MASK & (1 << pin)) {
+            ioRec->gpio = (GPIO_TypeDef *)(GPIOA_BASE + 0x50);   // ports are 0x400 apart
+            ioRec->pin = 1 << pin;
+            ioRec->ioc_index = IOC_PAD_PF00 + pin;
+            ioRec->pioc_index = (uint32_t)-1;
+            ioRec->bioc_index = (uint32_t)-1;
+            ioRec++;
+        }
+    }
+#endif
+#if defined(DEFIO_PORT_X_USED_COUNT) && (DEFIO_PORT_X_USED_COUNT > 0)
+    for (unsigned pin = 0; pin < 32; pin++) {
+        if (DEFIO_PORT_X_USED_MASK & (1 << pin)) {
+            ioRec->gpio = (GPIO_TypeDef *)(GPIOA_BASE + 0xD0);   // ports are 0x400 apart
+            ioRec->pin = 1 << pin;
+            ioRec->ioc_index = IOC_PAD_PX00 + pin;
+            ioRec->pioc_index = IOC_PAD_PX00 + pin;
+            ioRec++;
+        }
+    }
+#endif
+#if defined(DEFIO_PORT_Y_USED_COUNT) && (DEFIO_PORT_Y_USED_COUNT > 0)
+    for (unsigned pin = 0; pin < 32; pin++) {
+        if (DEFIO_PORT_Y_USED_MASK & (1 << pin)) {
+            ioRec->gpio = (GPIO_TypeDef *)(GPIOA_BASE + 0xE0);   // ports are 0x400 apart
+            ioRec->pin = 1 << pin;
+            ioRec->ioc_index = IOC_PAD_PY00 + pin;
+            ioRec->pioc_index = IOC_PAD_PY00 + pin;
+            ioRec->bioc_index = (uint32_t)-1;
+            ioRec++;
+        }
+    }
+#endif
+#if defined(DEFIO_PORT_Z_USED_COUNT) && (DEFIO_PORT_Z_USED_COUNT > 0)
+    for (unsigned pin = 0; pin < 32; pin++) {
+        if (DEFIO_PORT_Z_USED_MASK & (1 << pin)) {
+            ioRec->gpio = (GPIO_TypeDef *)(GPIOA_BASE + 0xF0);   // ports are 0x400 apart
+            ioRec->pin = 1 << pin;
+            ioRec->ioc_index = IOC_PAD_PZ00 + pin;
+            ioRec->bioc_index = IOC_PAD_PZ00 + pin;
+            ioRec->pioc_index = (uint32_t)-1;
+            ioRec++;
+        }
+    }
+#endif
+#else
     for (unsigned port = 0; port < ARRAYLEN(ioDefUsedMask); port++) {
         for (unsigned pin = 0; pin < sizeof(ioDefUsedMask[0]) * 8; pin++) {
             if (ioDefUsedMask[port] & (1 << pin)) {
@@ -159,6 +302,7 @@ void IOInitGlobal(void)
             }
         }
     }
+#endif
 }
 
 IO_t IOGetByTag(ioTag_t tag)
@@ -182,7 +326,7 @@ IO_t IOGetByTag(ioTag_t tag)
 
 void IOTraversePins(IOTraverseFuncPtr_t fnPtr)
 {
-    for (int i = 0; i < DEFIO_IO_USED_COUNT; i++) {
+    for (uint32_t i = 0; i < DEFIO_IO_USED_COUNT; i++) {
         fnPtr(&ioRecs[i]);
     }
 }

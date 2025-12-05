@@ -199,7 +199,7 @@ static void sdcardSdio_init(const sdcardConfig_t *config, const spiPinConfig_t *
         sdcard.state = SDCARD_STATE_NOT_PRESENT;
         return;
     }
-
+#ifndef HPMicro
 #ifdef USE_DMA_SPEC
 #if !defined(STM32H7) // H7 uses IDMA
     const dmaChannelSpec_t *dmaChannelSpec = dmaGetChannelSpecByPeripheral(DMA_PERIPH_SDIO, 0, sdioConfig()->dmaopt);
@@ -217,11 +217,13 @@ static void sdcardSdio_init(const sdcardConfig_t *config, const spiPinConfig_t *
     }
 #endif
 #endif
+#endif
     if (sdioConfig()->useCache) {
         sdcard.useCache = 1;
     } else {
         sdcard.useCache = 0;
     }
+#ifndef HPMicro
 #ifdef USE_DMA_SPEC
 #if defined(STM32H7) // H7 uses IDMA
     SD_Initialize_LL(0);
@@ -230,6 +232,7 @@ static void sdcardSdio_init(const sdcardConfig_t *config, const spiPinConfig_t *
 #endif
 #else
     SD_Initialize_LL(SDCARD_SDIO_DMA_OPT);
+#endif
 #endif
 
     if (sdcard_isInserted()) {

@@ -99,6 +99,23 @@
 #define IOCFG_IPU            0
 #define IOCFG_IN_FLOATING    0
 
+#elif defined(HPMicro)
+//speed is packed inside modebits 5 and 2,
+#define IO_CONFIG(mode, speed, pupd) ((mode) | ((speed) << 2) | ((pupd) << 5))
+#define IO_CONFIG_AF(mode, speed, pupd, af, bpio_func)    ((mode) | ((speed) << 2) | ((pupd) << 5) | ((af) << 8) | (bpio_func) << 16)
+
+#define IOCFG_OUT_PP         IO_CONFIG(GPIO_MODE_OUTPUT_PP, GPIO_SPEED_FREQ_LOW,  GPIO_NOPULL)
+#define IOCFG_OUT_PP_UP      IO_CONFIG(GPIO_MODE_OUTPUT_PP, GPIO_SPEED_FREQ_LOW,  GPIO_PULLUP)
+#define IOCFG_OUT_OD         IO_CONFIG(GPIO_MODE_OUTPUT_OD, GPIO_SPEED_FREQ_LOW,  GPIO_NOPULL)
+#define IOCFG_AF_PP          IO_CONFIG(GPIO_MODE_AF_PP,     GPIO_SPEED_FREQ_LOW,  GPIO_NOPULL)
+#define IOCFG_AF_PP_PD       IO_CONFIG(GPIO_MODE_AF_PP,     GPIO_SPEED_FREQ_LOW,  GPIO_PULLDOWN)
+#define IOCFG_AF_PP_UP       IO_CONFIG(GPIO_MODE_AF_PP,     GPIO_SPEED_FREQ_LOW,  GPIO_PULLUP)
+#define IOCFG_AF_OD          IO_CONFIG(GPIO_MODE_AF_OD,     GPIO_SPEED_FREQ_LOW,  GPIO_NOPULL)
+#define IOCFG_AF_OD_UP       IO_CONFIG(GPIO_MODE_AF_OD,     GPIO_SPEED_FREQ_LOW,  GPIO_PULLUP)
+#define IOCFG_IPD            IO_CONFIG(GPIO_MODE_INPUT,     GPIO_SPEED_FREQ_LOW,  GPIO_PULLDOWN)
+#define IOCFG_IPU            IO_CONFIG(GPIO_MODE_INPUT,     GPIO_SPEED_FREQ_LOW,  GPIO_PULLUP)
+#define IOCFG_IN_FLOATING    IO_CONFIG(GPIO_MODE_INPUT,     GPIO_SPEED_FREQ_LOW,  GPIO_NOPULL)
+#define IOCFG_ANALOG         IO_CONFIG(GPIO_MODE_ANALOG,    GPIO_SPEED_FREQ_VERY_HIGH, GPIO_NOPULL)
 #else
 # warning "Unknown TARGET"
 #endif
@@ -119,7 +136,11 @@ void IOWrite(IO_t io, bool value);
 void IOHi(IO_t io);
 void IOLo(IO_t io);
 void IOToggle(IO_t io);
-
+#ifdef HPMicro
+uint32_t IO_IOC_INDEX(IO_t io);
+uint32_t IO_PIOC_INDEX(IO_t io);
+uint32_t IO_BIOC_INDEX(IO_t io);
+#endif
 void IOInit(IO_t io, resourceOwner_e owner, uint8_t index);
 void IORelease(IO_t io);  // unimplemented
 resourceOwner_e IOGetOwner(IO_t io);
@@ -129,6 +150,9 @@ IO_t IOGetByTag(ioTag_t tag);
 void IOConfigGPIO(IO_t io, ioConfig_t cfg);
 #ifdef USE_TIMER_AF
 void IOConfigGPIOAF(IO_t io, ioConfig_t cfg, uint8_t af);
+#endif
+#ifdef HPMicro
+void IOConfigGPIOAF(IO_t io, ioConfig_t cfg, uint32_t af, uint32_t af2);
 #endif
 
 void IOInitGlobal(void);

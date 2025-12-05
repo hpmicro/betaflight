@@ -28,7 +28,7 @@
 #include "common/utils.h"
 
 #define _STRTO_ENDPTR 1
-
+#if 0
 unsigned long _strto_l(const char * str, char ** endptr, int base, int sflag)
 {
     unsigned long number, cutoff;
@@ -131,3 +131,4 @@ int atoi(const char *str)
 {
     return strtol(str, NULL, 10);
 }
+#endif

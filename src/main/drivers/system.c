@@ -32,9 +32,14 @@
 #include "drivers/resource.h"
 #include "drivers/sound_beeper.h"
 
-
 #include "system.h"
-
+#ifdef HPMicro
+#include "board.h"
+#include "hpm_mchtmr_drv.h"
+#include "hpm_soc.h"
+#include "hpm_interrupt.h"
+#include "hpm_csr_drv.h"
+#endif
 #if defined(STM32F4) || defined(STM32F7) || defined(STM32H7) || defined(AT32F4)
 // See "RM CoreSight Architecture Specification"
 // B2.3.10  "LSR and LAR, Software Lock Status Register and Software Lock Access Register"
@@ -52,10 +57,12 @@ static volatile uint32_t sysTickUptime = 0;
 static volatile uint32_t sysTickValStamp = 0;
 // cached value of RCC->CSR
 uint32_t cachedRccCsrValue;
+#if !defined(HPMicro)
 static uint32_t cpuClockFrequency = 0;
-
+#endif
 void cycleCounterInit(void)
 {
+#ifndef HPMicro
 #if defined(USE_HAL_DRIVER)
     cpuClockFrequency = HAL_RCC_GetSysClockFreq();
 #elif defined(USE_ATBSP_DRIVER)
@@ -87,6 +94,11 @@ void cycleCounterInit(void)
 
     DWT->CYCCNT = 0;
     DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
+#else
+    mchtmr_init_counter(HPM_MCHTMR, 0);
+    usTicks = clock_get_frequency(clock_cpu0) / 1000000;
+    usTicksInv = 1e6f / clock_get_frequency(clock_cpu0);
+#endif
 }
 
 // SysTick
@@ -95,6 +107,10 @@ static volatile int sysTickPending = 0;
 
 void SysTick_Handler(void)
 {
+#ifdef HPMicro
+    mchtmr_delay(HPM_MCHTMR, clock_get_frequency(clock_mchtmr0) / 1000);
+    sysTickUptime++;
+#else
     ATOMIC_BLOCK(NVIC_PRIO_MAX) {
         sysTickUptime++;
         sysTickValStamp = SysTick->VAL;
@@ -105,12 +121,20 @@ void SysTick_Handler(void)
     // used by the HAL for some timekeeping and timeouts, should always be 1ms
     HAL_IncTick();
 #endif
+#endif
 }
-
+#ifdef HPMicro
+SDK_DECLARE_MCHTMR_ISR(SysTick_Handler)
+#endif
 // Return system uptime in microseconds (rollover in 70minutes)
 
-MMFLASH_CODE_NOINLINE uint32_t microsISR(void)
+uint32_t microsISR(void)
 {
+#ifdef HPMicro
+    uint64_t cycle_cnt = hpm_csr_get_core_mcycle();
+
+    return cycle_cnt / usTicks ;
+#else
     register uint32_t ms, pending, cycle_cnt;
 
     ATOMIC_BLOCK(NVIC_PRIO_MAX) {
@@ -134,10 +158,20 @@ MMFLASH_CODE_NOINLINE uint32_t microsISR(void)
     }
 
     return ((ms + pending) * 1000) + (usTicks * 1000 - cycle_cnt) / usTicks;
+#endif
 }
 
+#ifdef HPMicro
+uint64_t micros(void)
+#else
 uint32_t micros(void)
+#endif
 {
+#ifdef HPMicro
+    uint64_t cycle_cnt = hpm_csr_get_core_mcycle();
+
+    return cycle_cnt / usTicks ;
+#else
     register uint32_t ms, cycle_cnt;
 
     // Call microsISR() in interrupt and elevated (non-zero) BASEPRI context
@@ -152,11 +186,20 @@ uint32_t micros(void)
     } while (ms != sysTickUptime || cycle_cnt > sysTickValStamp);
 
     return (ms * 1000) + (usTicks * 1000 - cycle_cnt) / usTicks;
+#endif
 }
 
+#ifdef HPMicro
+uint64_t getCycleCounter(void)
+#else
 uint32_t getCycleCounter(void)
+#endif
 {
+#ifdef HPMicro
+    return hpm_csr_get_core_mcycle();
+#else
     return DWT->CYCCNT;
+#endif
 }
 
 int32_t clockCyclesToMicros(int32_t clockCycles)
@@ -189,42 +232,14 @@ uint32_t clockMicrosToCycles(uint32_t micros)
 // Return system uptime in milliseconds (rollover in 49 days)
 uint32_t millis(void)
 {
-    return sysTickUptime;
+    return micros() / 1000;
 }
 
-#if 1
 void delayMicroseconds(uint32_t us)
 {
     uint32_t now = micros();
     while (micros() - now < us);
 }
-#else
-void delayMicroseconds(uint32_t us)
-{
-    uint32_t elapsed = 0;
-    uint32_t lastCount = SysTick->VAL;
-
-    for (;;) {
-        register uint32_t current_count = SysTick->VAL;
-        uint32_t elapsed_us;
-
-        // measure the time elapsed since the last time we checked
-        elapsed += current_count - lastCount;
-        lastCount = current_count;
-
-        // convert to microseconds
-        elapsed_us = elapsed / usTicks;
-        if (elapsed_us >= us)
-            break;
-
-        // reduce the delay by the elapsed time
-        us -= elapsed_us;
-
-        // keep fractional microseconds for the next iteration
-        elapsed %= usTicks;
-    }
-}
-#endif
 
 void delay(uint32_t ms)
 {

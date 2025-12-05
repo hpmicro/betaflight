@@ -28,6 +28,8 @@
 #define MAX_SPI_PIN_SEL 4
 #elif defined(STM32H7)
 #define MAX_SPI_PIN_SEL 5
+#elif defined(HPMicro)
+#define MAX_SPI_PIN_SEL 3
 #else
 #error Unknown MCU family
 #endif
@@ -38,6 +40,11 @@ typedef struct spiPinDef_s {
     ioTag_t pin;
 #if defined(STM32F7) || defined(STM32H7) || defined(STM32G4) || defined(AT32F4)
     uint8_t af;
+#elif defined(HPMicro)
+    uint32_t af;
+    uint32_t af2;
+    uint32_t func;
+    uint32_t func2;
 #endif
 } spiPinDef_t;
 
@@ -47,8 +54,11 @@ typedef struct spiHardware_s {
     spiPinDef_t sckPins[MAX_SPI_PIN_SEL];
     spiPinDef_t misoPins[MAX_SPI_PIN_SEL];
     spiPinDef_t mosiPins[MAX_SPI_PIN_SEL];
-#ifndef STM32F7
+#if (!defined(STM32F7)) && (!defined(HPMicro))
     uint8_t af;
+#else
+    uint32_t af;
+    uint32_t af2;
 #endif
     rccPeriphTag_t rcc;
 #ifdef USE_DMA
@@ -68,7 +78,16 @@ typedef struct SPIDevice_s {
     uint8_t misoAF;
     uint8_t mosiAF;
 #else
+#if defined(HPMicro)
+    uint32_t sckAF;
+    uint32_t misoAF;
+    uint32_t mosiAF;
+    uint32_t sckAF2;
+    uint32_t misoAF2;
+    uint32_t mosiAF2;
+#else
     uint8_t af;
+#endif
 #endif
 #if defined(HAL_SPI_MODULE_ENABLED)
     SPI_HandleTypeDef hspi;

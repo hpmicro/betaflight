@@ -33,6 +33,7 @@
  * DMA descriptors.
  */
 dmaChannelDescriptor_t dmaDescriptors[DMA_LAST_HANDLER] = {
+#ifndef HPMicro
     DEFINE_DMA_CHANNEL(DMA1, 1,  0),
     DEFINE_DMA_CHANNEL(DMA1, 2,  4),
     DEFINE_DMA_CHANNEL(DMA1, 3,  8),
@@ -40,6 +41,7 @@ dmaChannelDescriptor_t dmaDescriptors[DMA_LAST_HANDLER] = {
     DEFINE_DMA_CHANNEL(DMA1, 5, 16),
     DEFINE_DMA_CHANNEL(DMA1, 6, 20),
     DEFINE_DMA_CHANNEL(DMA1, 7, 24),
+#endif
 };
 
 /*
@@ -58,6 +60,7 @@ DEFINE_DMA_IRQ_HANDLER(1, 7, DMA1_CH7_HANDLER)
 
 uint32_t dmaFlag_IT_TCIF(const dmaResource_t *channel)
 {
+#ifndef HPMicro
     RETURN_TCIF_FLAG((DMA_ARCH_TYPE *)channel, 1, 1);
     RETURN_TCIF_FLAG((DMA_ARCH_TYPE *)channel, 1, 2);
     RETURN_TCIF_FLAG((DMA_ARCH_TYPE *)channel, 1, 3);
@@ -71,18 +74,22 @@ uint32_t dmaFlag_IT_TCIF(const dmaResource_t *channel)
     RETURN_TCIF_FLAG((DMA_ARCH_TYPE *)channel, 2, 4);
     RETURN_TCIF_FLAG((DMA_ARCH_TYPE *)channel, 2, 5);
     return 0;
+#endif
 }
 
 #define DMA_RCC(x) ((x) == DMA1 ? RCC_AHBPeriph_DMA1 : RCC_AHBPeriph_DMA2)
 void dmaEnable(dmaIdentifier_e identifier)
 {
+#ifndef HPMicro
     const int index = DMA_IDENTIFIER_TO_INDEX(identifier);
 
     RCC_AHBPeriphClockCmd(DMA_RCC(dmaDescriptors[index].dma), ENABLE);
+#endif
 }
 
 void dmaSetHandler(dmaIdentifier_e identifier, dmaCallbackHandlerFuncPtr callback, uint32_t priority, uint32_t userParam)
 {
+#ifndef HPMicro
     NVIC_InitTypeDef NVIC_InitStructure;
 
     const int index = DMA_IDENTIFIER_TO_INDEX(identifier);
@@ -97,5 +104,6 @@ void dmaSetHandler(dmaIdentifier_e identifier, dmaCallbackHandlerFuncPtr callbac
     NVIC_InitStructure.NVIC_IRQChannelSubPriority = NVIC_PRIORITY_SUB(priority);
     NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
     NVIC_Init(&NVIC_InitStructure);
+#endif
 }
 #endif

@@ -40,7 +40,10 @@
 
 #include "drivers/flash.h"
 #include "drivers/system.h"
-
+#ifdef HPMicro
+#include "hpm_l1c_drv.h"
+static xpi_nor_config_t s_xpi_nor_config;
+#endif
 static uint16_t eepromConfigSize;
 
 typedef enum {
@@ -291,8 +294,28 @@ void loadEEPROMFromFile(void)
 }
 #endif
 
+#ifdef HPMicro
+static void internalFalshInit(void)
+{
+    xpi_nor_config_option_t option;
+    option.header.U = BOARD_APP_XPI_NOR_CFG_OPT_HDR;
+    option.option0.U = BOARD_APP_XPI_NOR_CFG_OPT_OPT0;
+    option.option1.U = BOARD_APP_XPI_NOR_CFG_OPT_OPT1;
+
+    XPI_Type *base = BOARD_APP_XPI_NOR_XPI_BASE;
+
+    hpm_stat_t status = rom_xpi_nor_auto_config(base, &s_xpi_nor_config, &option);
+    if (status != status_success) {
+        while(1);
+    }
+}
+#endif
+
 void initEEPROM(void)
 {
+#ifdef HPMicro
+    internalFalshInit();
+#endif
     // Verify that this architecture packs as expected.
     STATIC_ASSERT(offsetof(packingTest_t, byte) == 0, byte_packing_test_failed);
     STATIC_ASSERT(offsetof(packingTest_t, word) == 1, word_packing_test_failed);
@@ -321,6 +344,12 @@ void initEEPROM(void)
 bool isEEPROMVersionValid(void)
 {
     const uint8_t *p = &__config_start;
+#ifdef HPMicro
+    const uint8_t *pend = &__config_end;
+    uint32_t aligned_start = HPM_L1C_CACHELINE_ALIGN_DOWN(p);
+    uint32_t aligned_end = HPM_L1C_CACHELINE_ALIGN_UP(pend);
+    l1c_dc_invalidate((uint32_t)aligned_start, aligned_end - aligned_start);
+#endif
     const configHeader_t *header = (const configHeader_t *)p;
 
     if (header->eepromConfigVersion != EEPROM_CONF_VERSION) {
@@ -334,6 +363,12 @@ bool isEEPROMVersionValid(void)
 bool isEEPROMStructureValid(void)
 {
     const uint8_t *p = &__config_start;
+#ifdef HPMicro
+    const uint8_t *pend = &__config_end;
+    uint32_t aligned_start = HPM_L1C_CACHELINE_ALIGN_DOWN(p);
+    uint32_t aligned_end = HPM_L1C_CACHELINE_ALIGN_UP(pend);
+    l1c_dc_invalidate((uint32_t)aligned_start, aligned_end - aligned_start);
+#endif
     const configHeader_t *header = (const configHeader_t *)p;
 
     if (header->magic_be != 0xBE) {
@@ -402,6 +437,12 @@ size_t getEEPROMStorageSize(void)
 static const configRecord_t *findEEPROM(const pgRegistry_t *reg, configRecordFlags_e classification)
 {
     const uint8_t *p = &__config_start;
+#ifdef HPMicro
+    const uint8_t *pend = &__config_end;
+    uint32_t aligned_start = HPM_L1C_CACHELINE_ALIGN_DOWN(p);
+    uint32_t aligned_end = HPM_L1C_CACHELINE_ALIGN_UP(pend);
+    l1c_dc_invalidate((uint32_t)aligned_start, aligned_end - aligned_start);
+#endif
     p += sizeof(configHeader_t);             // skip header
     while (true) {
         const configRecord_t *record = (const configRecord_t *)p;

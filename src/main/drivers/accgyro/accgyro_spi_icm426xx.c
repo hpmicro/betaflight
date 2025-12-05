@@ -79,6 +79,7 @@
 #define ICM426XX_RA_ACCEL_CONFIG0                   0x50
 
 // --- Registers for gyro and acc Anti-Alias Filter ---------
+#define ICM426XX_RA_GYRO_CONFIG_STATIC2             0x0B  // User Bank 1
 #define ICM426XX_RA_GYRO_CONFIG_STATIC3             0x0C  // User Bank 1
 #define ICM426XX_RA_GYRO_CONFIG_STATIC4             0x0D  // User Bank 1
 #define ICM426XX_RA_GYRO_CONFIG_STATIC5             0x0E  // User Bank 1
@@ -122,7 +123,9 @@
 #define ICM426XX_UI_DRDY_INT1_EN_ENABLED            (1 << 3)
 
 typedef enum {
-    ODR_CONFIG_8K = 0,
+    ODR_CONFIG_32K = 0,
+    ODR_CONFIG_16K,
+    ODR_CONFIG_8K,
     ODR_CONFIG_4K,
     ODR_CONFIG_2K,
     ODR_CONFIG_1K,
@@ -134,6 +137,10 @@ typedef enum {
     AAF_CONFIG_536HZ,
     AAF_CONFIG_997HZ,
     AAF_CONFIG_1962HZ,
+    AAF_CONFIG_4K,
+    AAF_CONFIG_8K,
+    AAF_CONFIG_16K,
+    AAF_CONFIG_32K,
     AAF_CONFIG_COUNT
 } aafConfig_e;
 
@@ -145,6 +152,8 @@ typedef struct aafConfig_s {
 
 // Possible output data rates (ODRs)
 static uint8_t odrLUT[ODR_CONFIG_COUNT] = {  // see GYRO_ODR in section 5.6
+    [ODR_CONFIG_32K] = 1,
+    [ODR_CONFIG_16K] = 2,
     [ODR_CONFIG_8K] = 3,
     [ODR_CONFIG_4K] = 4,
     [ODR_CONFIG_2K] = 5,
@@ -168,6 +177,18 @@ static aafConfig_t aafLUT42605[AAF_CONFIG_COUNT] = {  // see table in section 5.
     [AAF_CONFIG_1962HZ] = { 63, 3968,  3 }, // 995 Hz is the max cutoff on the 42605
 };
 
+// Possible gyro Anti-Alias Filter (AAF) cutoffs for ICM-42688P
+// actual cutoff differs slightly from those of the 42688P
+static aafConfig_t aafLUT40609[AAF_CONFIG_COUNT] = {  // see table in section 5.3
+    [AAF_CONFIG_258HZ]  = { 21,  440,  6 }, // actually 249 Hz
+    [AAF_CONFIG_536HZ]  = { 39, 1536,  4 }, // actually 524 Hz
+    [AAF_CONFIG_997HZ]  = { 63, 3968,  3 }, // actually 995 Hz
+    [AAF_CONFIG_1962HZ] = { 63, 3968,  3 }, // 995 Hz is the max cutoff on the 42605
+    [AAF_CONFIG_4K] = { 63, 3968,  2 }, // 995 Hz is the max cutoff on the 42605
+    [AAF_CONFIG_8K] = { 63, 3968,  2 }, // 995 Hz is the max cutoff on the 42605
+    [AAF_CONFIG_16K] = { 63, 3968,  1 }, // 995 Hz is the max cutoff on the 42605
+    [AAF_CONFIG_32K] = { 63, 3968,  1 }, // 995 Hz is the max cutoff on the 42605
+};
 uint8_t icm426xxSpiDetect(const extDevice_t *dev)
 {
     spiWriteReg(dev, ICM426XX_RA_PWR_MGMT0, 0x00);
@@ -178,6 +199,9 @@ uint8_t icm426xxSpiDetect(const extDevice_t *dev)
         delay(150);
         const uint8_t whoAmI = spiReadRegMsk(dev, MPU_RA_WHO_AM_I);
         switch (whoAmI) {
+        case ICM20609_WHO_AM_I_CONST:
+            icmDetected = ICM_40609_SPI;
+            break;
         case ICM42605_WHO_AM_I_CONST:
             icmDetected = ICM_42605_SPI;
             break;
@@ -210,6 +234,8 @@ bool icm426xxSpiAccDetect(accDev_t *acc)
     case ICM_42605_SPI:
         break;
     case ICM_42688P_SPI:
+        break;
+    case ICM_40609_SPI:
         break;
     default:
         return false;
@@ -259,12 +285,16 @@ void icm426xxGyroInit(gyroDev_t *gyro)
     const mpuSensor_e gyroModel = gyro->mpuDetectionResult.sensor;
     aafConfig_t aafConfig = getGyroAafConfig(gyroModel, gyroConfig()->gyro_hardware_lpf);
     setUserBank(dev, ICM426XX_BANK_SELECT1);
+    spiWriteReg(dev, ICM426XX_RA_GYRO_CONFIG_STATIC2, 0x0);
     spiWriteReg(dev, ICM426XX_RA_GYRO_CONFIG_STATIC3, aafConfig.delt);
     spiWriteReg(dev, ICM426XX_RA_GYRO_CONFIG_STATIC4, aafConfig.deltSqr & 0xFF);
     spiWriteReg(dev, ICM426XX_RA_GYRO_CONFIG_STATIC5, (aafConfig.deltSqr >> 8) | (aafConfig.bitshift << 4));
 
     // Configure acc Anti-Alias Filter for 1kHz sample rate (see tasks.c)
-    aafConfig = getGyroAafConfig(gyroModel, AAF_CONFIG_258HZ);
+    if (gyro->mpuDetectionResult.sensor == ICM_40609_SPI)
+        aafConfig = getGyroAafConfig(gyroModel, AAF_CONFIG_16K);
+    else
+        aafConfig = getGyroAafConfig(gyroModel, AAF_CONFIG_258HZ);
     setUserBank(dev, ICM426XX_BANK_SELECT2);
     spiWriteReg(dev, ICM426XX_RA_ACCEL_CONFIG_STATIC2, aafConfig.delt << 1);
     spiWriteReg(dev, ICM426XX_RA_ACCEL_CONFIG_STATIC3, aafConfig.deltSqr & 0xFF);
@@ -299,12 +329,22 @@ void icm426xxGyroInit(gyroDev_t *gyro)
 
     // Get desired output data rate
     uint8_t odrConfig;
-    const unsigned decim = llog2(gyro->mpuDividerDrops + 1);
+    unsigned decim;
+    if (gyro->mpuDetectionResult.sensor == ICM_40609_SPI)
+        decim = ODR_CONFIG_16K;
+    else
+        decim = llog2(gyro->mpuDividerDrops + 1);
+    
     if (gyro->gyroRateKHz && decim < ODR_CONFIG_COUNT) {
         odrConfig = odrLUT[decim];
     } else {
-        odrConfig = odrLUT[ODR_CONFIG_1K];
-        gyro->gyroRateKHz = GYRO_RATE_1_kHz;
+        if (gyro->mpuDetectionResult.sensor == ICM_40609_SPI) {
+            odrConfig = odrLUT[ODR_CONFIG_32K];
+            gyro->gyroRateKHz = GYRO_RATE_32_kHz;
+        } else {
+            odrConfig = odrLUT[ODR_CONFIG_1K];
+            gyro->gyroRateKHz = GYRO_RATE_1_kHz;
+        }
     }
 
     STATIC_ASSERT(INV_FSR_2000DPS == 3, "INV_FSR_2000DPS must be 3 to generate correct value");
@@ -323,6 +363,8 @@ bool icm426xxSpiGyroDetect(gyroDev_t *gyro)
         break;
     case ICM_42688P_SPI:
         break;
+    case ICM_40609_SPI:
+        break;
     default:
         return false;
     }
@@ -338,6 +380,17 @@ bool icm426xxSpiGyroDetect(gyroDev_t *gyro)
 static aafConfig_t getGyroAafConfig(const mpuSensor_e gyroModel, const aafConfig_e config)
 {
     switch (gyroModel){
+    case ICM_40609_SPI:
+        switch (config) {
+        case GYRO_HARDWARE_LPF_NORMAL:
+            return aafLUT40609[AAF_CONFIG_32K];
+        case GYRO_HARDWARE_LPF_OPTION_1:
+            return aafLUT40609[AAF_CONFIG_536HZ];
+        case GYRO_HARDWARE_LPF_OPTION_2:
+            return aafLUT40609[AAF_CONFIG_997HZ];
+        default:
+            return aafLUT40609[AAF_CONFIG_258HZ];
+        }
     case ICM_42605_SPI:
         switch (config) {
         case GYRO_HARDWARE_LPF_NORMAL:

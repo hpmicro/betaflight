@@ -48,7 +48,7 @@
 #include "drivers/motor.h"
 
 #include "pwm_output_dshot_shared.h"
-
+extern uint32_t dshot_duty_count, dshot_telemetry_count;
 FAST_DATA_ZERO_INIT uint8_t dmaMotorTimerCount = 0;
 #ifdef STM32F7
 FAST_DATA_ZERO_INIT motorDmaTimer_t dmaMotorTimers[MAX_DMA_TIMERS];
@@ -76,6 +76,7 @@ uint8_t getTimerIndex(TIM_TypeDef *timer)
             return i;
         }
     }
+    dmaMotorTimers[dmaMotorTimerCount].inited = false;
     dmaMotorTimers[dmaMotorTimerCount++].timer = timer;
     return dmaMotorTimerCount - 1;
 }
@@ -125,6 +126,8 @@ FAST_CODE void pwmWriteDshotInt(uint8_t index, uint16_t value)
 #ifdef USE_FULL_LL_DRIVER
         xLL_EX_DMA_SetDataLength(motor->dmaRef, bufferSize);
         xLL_EX_DMA_EnableResource(motor->dmaRef);
+#elif defined(HPMicro)
+        pwmDshotStartTransfer(motor, bufferSize * 4);
 #else
         xDMA_SetCurrDataCounter(motor->dmaRef, bufferSize);
 
@@ -143,8 +146,37 @@ FAST_CODE void pwmWriteDshotInt(uint8_t index, uint16_t value)
 
 #ifdef USE_DSHOT_TELEMETRY
 
-void dshotEnableChannels(uint8_t motorCount);
-
+static int combine_edge_data(uint32_t *pos, uint32_t *neg, uint32_t *buf, uint32_t pos_cnt, uint32_t neg_cnt)
+{
+    uint32_t posidx = 0, negidx = 0;
+    uint32_t idx = 0;
+    while((posidx < pos_cnt) || (negidx < neg_cnt)) {
+        //drop the first data if it is zero
+        if ((posidx == 0) && (pos[posidx] == 0)) {
+            posidx++;
+        }
+        if ((negidx == 0) && (neg[negidx] == 0)) {
+            negidx++;
+        }
+        if ((pos[posidx] == 0) && (neg[negidx] == 0))
+            break;
+        if (pos[posidx] == 0) {
+            buf[idx] = neg[negidx];
+            negidx++;
+        } else if (neg[negidx] == 0) {
+            buf[idx] = pos[posidx];
+            posidx++;
+        } else if(pos[posidx] > neg[negidx]) {
+            buf[idx] = neg[negidx];
+            negidx++;
+        } else {
+            buf[idx] = pos[posidx];
+            posidx++;
+        }
+        idx++;
+    }
+    return idx;
+}
 
 static uint32_t decodeTelemetryPacket(uint32_t buffer[], uint32_t count)
 {
@@ -158,7 +190,7 @@ static uint32_t decodeTelemetryPacket(uint32_t buffer[], uint32_t count)
             if (bits >= 21) {
                 break;
             }
-            len = (diff + 8) / 16;
+            len = (diff + 30) / 120;
         } else {
             len = 21 - bits;
         }
@@ -209,17 +241,23 @@ FAST_CODE_NOINLINE bool pwmTelemetryDecode(void)
     const timeMs_t currentTimeMs = millis();
 #endif
     const timeUs_t currentUs = micros();
-
+    DMA_Type *dma_base_neg, *dma_base_pos;
+    uint8_t ch_neg, ch_pos;
     for (int i = 0; i < dshotPwmDevice.count; i++) {
         timeDelta_t usSinceInput = cmpTimeUs(currentUs, inputStampUs);
         if (usSinceInput >= 0 && usSinceInput < dmaMotors[i].dshotTelemetryDeadtimeUs) {
             return false;
         }
         if (dmaMotors[i].isInput) {
+            dma_base_neg = dmaMotors[i].timerHardware->dma_neg;
+            dma_base_pos = dmaMotors[i].timerHardware->dma_pos;
+            ch_neg = dmaMotors[i].timerHardware->gptmr_dma_ch_neg;
+            ch_pos = dmaMotors[i].timerHardware->gptmr_dma_ch_pos;
 #ifdef USE_FULL_LL_DRIVER
             uint32_t edges = GCR_TELEMETRY_INPUT_LEN - xLL_EX_DMA_GetDataLength(dmaMotors[i].dmaRef);
 #else
-            uint32_t edges = GCR_TELEMETRY_INPUT_LEN - xDMA_GetCurrDataCounter(dmaMotors[i].dmaRef);
+            volatile uint32_t edges_neg = GCR_TELEMETRY_INPUT_LEN - dma_get_remaining_transfer_size(dma_base_neg, ch_neg);
+            volatile uint32_t edges_pos = GCR_TELEMETRY_INPUT_LEN - dma_get_remaining_transfer_size(dma_base_pos, ch_pos);
 #endif
 
 #ifdef USE_FULL_LL_DRIVER
@@ -227,16 +265,17 @@ FAST_CODE_NOINLINE bool pwmTelemetryDecode(void)
 #elif defined(AT32F435)
             tmr_dma_request_enable(dmaMotors[i].timerHardware->tim, dmaMotors[i].timerDmaSource, FALSE);
 #else
-            TIM_DMACmd(dmaMotors[i].timerHardware->tim, dmaMotors[i].timerDmaSource, DISABLE);
+            dma_disable_channel(dma_base_neg, ch_neg);
+            dma_disable_channel(dma_base_pos, ch_pos);
 #endif
 
             uint16_t rawValue;
 
-            if (edges > MIN_GCR_EDGES) {
+            if (edges_neg > MIN_GCR_EDGES) {
                 dshotTelemetryState.readCount++;
-
-                rawValue = decodeTelemetryPacket(dmaMotors[i].dmaBuffer, edges);
-
+                memset(dmaMotors[i].dmaBuffer, 0, DSHOT_DMA_BUFFER_ALLOC_SIZE * 4);
+                uint32_t len = combine_edge_data(dmaMotors[i].dmaBuffer_pos_edge, dmaMotors[i].dmaBuffer_neg_edge, dmaMotors[i].dmaBuffer, edges_pos, edges_neg);
+                rawValue = decodeTelemetryPacket(dmaMotors[i].dmaBuffer, len);
                 if (rawValue != DSHOT_TELEMETRY_INVALID) {
                     // Check EDT enable or store raw value
                     if ((rawValue == 0x0E00) && (dshotCommandGetCurrent(i) == DSHOT_CMD_EXTENDED_TELEMETRY_ENABLE)) {
@@ -260,7 +299,6 @@ FAST_CODE_NOINLINE bool pwmTelemetryDecode(void)
 
     dshotTelemetryState.rawValueState = DSHOT_RAW_VALUE_STATE_NOT_PROCESSED;
     inputStampUs = 0;
-    dshotEnableChannels(dshotPwmDevice.count);
     return true;
 }
 

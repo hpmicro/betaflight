@@ -34,6 +34,9 @@ typedef struct ioRec_s {
     uint16_t pin;
     resourceOwner_e owner;
     uint8_t index;
+    uint32_t ioc_index;   // index in IOC registers
+    uint32_t pioc_index;  // index in PIOC registers
+    uint32_t bioc_index;  // index in BIOC registers
 } ioRec_t;
 
 extern ioRec_t ioRecs[];

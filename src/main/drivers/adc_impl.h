@@ -45,8 +45,10 @@
 #else
 #define ADC_TAG_MAP_COUNT 47
 #endif
-#else
+#elif !defined(HPMicro)
 #define ADC_TAG_MAP_COUNT 10
+#else
+#define ADC_TAG_MAP_COUNT 26
 #endif
 
 typedef struct adcTagMap_s {
@@ -59,7 +61,7 @@ typedef struct adcTagMap_s {
 } adcTagMap_t;
 
 // Encoding for adcTagMap_t.devices
-
+#define ADC_DEVICES_23  ((1 << ADCDEV_2)|(1 << ADCDEV_3))
 #define ADC_DEVICES_1   (1 << ADCDEV_1)
 #define ADC_DEVICES_2   (1 << ADCDEV_2)
 #define ADC_DEVICES_3   (1 << ADCDEV_3)
@@ -73,17 +75,9 @@ typedef struct adcTagMap_s {
 typedef struct adcDevice_s {
     ADC_TypeDef* ADCx;
     rccPeriphTag_t rccADC;
-#if !defined(USE_DMA_SPEC)
-    dmaResource_t* dmaResource;
-#if defined(STM32F4) || defined(STM32F7) || defined(STM32H7) || defined(STM32G4)
     uint32_t channel;
-#endif
-#endif // !defined(USE_DMA_SPEC)
-#if defined(STM32F7) || defined(STM32H7) || defined(STM32G4)
-    ADC_HandleTypeDef ADCHandle;
-    DMA_HandleTypeDef DmaHandle;
-#endif
-#if defined(STM32H7) || defined(STM32G4)
+
+#if defined(STM32H7) || defined(STM32G4) || defined(HPMicro)
     uint8_t irq;
     uint32_t channelBits;
 #endif

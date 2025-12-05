@@ -62,6 +62,8 @@ DMA_RW_AXI __attribute__((aligned(32))) uint32_t ledStripDMABuffer[WS2811_DMA_BU
 #else
 #if defined(STM32F7)
 FAST_DATA_ZERO_INIT uint32_t ledStripDMABuffer[WS2811_DMA_BUFFER_SIZE];
+#elif defined(HPMicro)
+__attribute__((section(".ahb_sram")))  __attribute__((aligned(8))) uint64_t ledStripDMABuffer[WS2811_DMA_BUFFER_SIZE];
 #else
 uint32_t ledStripDMABuffer[WS2811_DMA_BUFFER_SIZE];
 #endif
@@ -72,9 +74,13 @@ static bool ws2811Initialised = false;
 volatile bool ws2811LedDataTransferInProgress = false;
 static unsigned usedLedCount = 0;
 static bool needsFullRefresh = true;
-
+#ifdef HPMicro
+uint64_t BIT_COMPARE_1 = 0;
+uint64_t BIT_COMPARE_0 = 0;
+#else
 uint16_t BIT_COMPARE_1 = 0;
 uint16_t BIT_COMPARE_0 = 0;
+#endif
 
 static hsvColor_t ledColorBuffer[WS2811_DATA_BUFFER_SIZE];
 
@@ -152,9 +158,11 @@ bool isWS2811LedStripReady(void)
 {
     return ws2811Initialised && !ws2811LedDataTransferInProgress;
 }
-
+extern uint32_t g_reload2;
+extern void ws2812_driver_convert_data(uint8_t R, uint8_t G, uint8_t B, uint8_t led_idx);
 STATIC_UNIT_TESTED void updateLEDDMABuffer(ledStripFormatRGB_e ledFormat, rgbColor24bpp_t *color, unsigned ledIndex)
 {
+#ifndef HPMicro
     uint32_t bits_per_led;
     uint32_t packed_colour;
 
@@ -184,6 +192,34 @@ STATIC_UNIT_TESTED void updateLEDDMABuffer(ledStripFormatRGB_e ledFormat, rgbCol
     for (int index = bits_per_led-1; index >= 0; index--) {
         ledStripDMABuffer[ledIndex * bits_per_led + dmaBufferOffset++] = (packed_colour & (1 << index)) ? BIT_COMPARE_1 : BIT_COMPARE_0;
     }
+#else
+    ws2812_driver_convert_data(color->rgb.r, color->rgb.g, color->rgb.b, ledIndex);
+#endif
+}
+
+void add_tail_buffer_data(ledStripFormatRGB_e ledFormat, uint32_t index)
+{
+    uint32_t bits_per_led;
+    uint32_t packed_colour;
+
+    switch (ledFormat) {
+        case LED_RGB: // WS2811 drivers use RGB format
+            bits_per_led = 24;
+            break;
+
+        case LED_GRBW: // SK6812 drivers use this
+        {
+            bits_per_led = 32;
+            break;
+        }
+
+        case LED_GRB: // WS2812 drivers use GRB format
+        default:
+            bits_per_led = 24;
+        break;
+    }
+   ledStripDMABuffer[index * bits_per_led + 2] = ((g_reload2 + 3) << 4) | (((uint64_t)g_reload2 + 1) << 36);
+   ledStripDMABuffer[index * bits_per_led + 3] = ((g_reload2 + 3) << 4) | (((uint64_t)g_reload2 + 1) << 36); 
 }
 
 /*
@@ -193,6 +229,7 @@ STATIC_UNIT_TESTED void updateLEDDMABuffer(ledStripFormatRGB_e ledFormat, rgbCol
 bool ws2811UpdateStrip(ledStripFormatRGB_e ledFormat, uint8_t brightness)
 {
     static uint8_t ledIndex = 0;
+    static uint32_t max_index = 0;
     timeUs_t startTime = micros();
     // don't wait - risk of infinite block, just get an update next time round
     if (!ws2811Initialised || ws2811LedDataTransferInProgress) {
@@ -226,7 +263,26 @@ bool ws2811UpdateStrip(ledStripFormatRGB_e ledFormat, uint8_t brightness)
 #endif
 
     ws2811LedDataTransferInProgress = true;
-    ws2811LedStripDMAEnable();
+    uint32_t bits_per_led;
+
+    switch (ledFormat) {
+        case LED_RGB: // WS2811 drivers use RGB format
+            bits_per_led = 24;
+            break;
+
+        case LED_GRBW: // SK6812 drivers use this
+        {
+            bits_per_led = 32;
+            break;
+        }
+
+        case LED_GRB: // WS2812 drivers use GRB format
+        default:
+            bits_per_led = 24;
+        break;
+    }
+    //ws2811LedStripDMAEnable(ledIndex);
+    ledIndex = 0;
 
     return true;
 }

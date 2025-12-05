@@ -1,0 +1,42 @@
+# Copyright (c) 2024-2025 HPMicro
+# SPDX-License-Identifier: BSD-3-Clause
+
+sdk_src(
+    vtx.c 
+    vtx_rtc6705.c 
+    vtx_smartaudio.c 
+    vtx_tramp.c 
+    vtx_control.c 
+    vtx_msp.c
+    dashboard.c 
+    displayport_frsky_osd.c 
+    displayport_max7456.c 
+    displayport_msp.c 
+    displayport_oled.c 
+    displayport_srxl.c 
+    displayport_crsf.c 
+    displayport_hott.c 
+    frsky_osd.c 
+    rcdevice_cam.c 
+    rcdevice.c 
+    gps.c 
+    ledstrip.c 
+    pidaudio.c
+    spektrum_vtx_control.c 
+    spektrum_rssi.c 
+    serial_4way.c 
+    serial_4way_avrootloader.c 
+    serial_4way_stk500v2.c 
+    beeper.c 
+    piniobox.c 
+    serial.c 
+    smartaudio_protocol.c 
+    statusindicator.c 
+    tramp_protocol.c 
+    transponder_ir.c 
+    usb_cdc_hid.c 
+    usb_msc.c
+    flashfs.c
+    asyncfatfs/asyncfatfs.c
+    asyncfatfs/fat_standard.c
+)

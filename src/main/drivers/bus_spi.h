@@ -48,6 +48,12 @@
 #define SPI_IO_AF_SDI_CFG       IO_CONFIG(GPIO_MODE_MUX, GPIO_DRIVE_STRENGTH_STRONGER, GPIO_OUTPUT_PUSH_PULL, GPIO_PULL_UP)
 #define SPI_IO_CS_CFG           IO_CONFIG(GPIO_MODE_OUTPUT, GPIO_DRIVE_STRENGTH_STRONGER, GPIO_OUTPUT_PUSH_PULL, GPIO_PULL_NONE)
 #define SPI_IO_CS_HIGH_CFG      IO_CONFIG(GPIO_MODE_INPUT, GPIO_DRIVE_STRENGTH_STRONGER, GPIO_OUTPUT_PUSH_PULL, GPIO_PULL_UP)
+#elif defined(HPMicro)
+#define SPI_IO_AF_CFG           IO_CONFIG(1, 1, 1)
+#define SPI_IO_AF_SCK_CFG_HIGH  IO_CONFIG(1, 1, 1)
+#define SPI_IO_AF_SCK_CFG_LOW   IO_CONFIG(1, 1, 1)
+#define SPI_IO_AF_SDI_CFG       IO_CONFIG(1, 1, 1)
+#define SPI_IO_CS_CFG           IO_CONFIG(1, 1, 1)
 #endif
 
 // De facto standard mode
@@ -106,7 +112,7 @@ void spiPreinitByTag(ioTag_t tag);
 bool spiInit(SPIDevice device);
 
 // Called after all devices are initialised to enable SPI DMA where streams are available.
-void spiInitBusDMA();
+void spiInitBusDMA(void);
 
 
 SPIDevice spiDeviceByInstance(SPI_TypeDef *instance);
@@ -117,11 +123,19 @@ SPI_TypeDef *spiInstanceByDevice(SPIDevice device);
 // Mark a device's associated bus as being SPI
 bool spiSetBusInstance(extDevice_t *dev, uint32_t device);
 // Determine the divisor to use for a given bus frequency
+#ifdef HPMicro
+uint32_t spiCalculateDivider(uint32_t freq);
+#else
 uint16_t spiCalculateDivider(uint32_t freq);
+#endif
 // Return the SPI clock based on the given divisor
 uint32_t spiCalculateClock(uint16_t spiClkDivisor);
 // Set the clock divisor to be used for accesses by the given device
+#ifdef HPMicro
+void spiSetClkDivisor(const extDevice_t *dev, uint32_t divider);
+#else
 void spiSetClkDivisor(const extDevice_t *dev, uint16_t divider);
+#endif
 // Set the clock phase/polarity to be used for accesses by the given device
 void spiSetClkPhasePolarity(const extDevice_t *dev, bool leadingEdge);
 // Enable/disable DMA on a specific device. Enabled by default.

@@ -1,0 +1,22 @@
+# Copyright (c) 2022 HPMicro
+# SPDX-License-Identifier: BSD-3-Clause
+
+board:
+    soc: HPM6750
+    device: HPM6754xVMx
+    openocd-soc: hpm6750-dual-core
+    openocd-probe: cmsis_dap
+    on-board-ram:
+      type: sdram
+      size: 32M
+      width: 32bit
+    on-board-flash:
+      type: qspi-nor-flash
+      size: 4M
+    feature:
+      - board_gpt_pin
+      - board_motro_control
+      - board_gpio_led
+      - board_gpio_key
+      - board_sdcard
+      - board_dual_usb

@@ -24,7 +24,11 @@
 
 // IO pin identification
 // make sure that ioTag_t can't be assigned into IO_t without warning
+#ifdef HPMicro
+typedef uint32_t ioTag_t;       // packet tag to specify IO pin
+#else
 typedef uint8_t ioTag_t;       // packet tag to specify IO pin
+#endif
 typedef void* IO_t;            // type specifying IO pin. Currently ioRec_t pointer, but this may change
 
 // NONE initializer for ioTag_t variables

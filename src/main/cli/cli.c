@@ -277,7 +277,8 @@ static const char *mcuTypeNames[] = {
     "H723/H725",
     "G474",
     "H730",
-    "AT32F435"
+    "AT32F435",
+    "HPM6750"
 };
 
 static const char *configurationStates[] = {
@@ -4872,7 +4873,7 @@ static void cliTasks(const char *cmdName, char *cmdline)
                     taskInfo.lateCount, taskInfo.runCount, taskInfo.execTime);
 #else
                 cliPrintLinef("%6d %7d %7d %4d.%1d%% %4d.%1d%% %9d",
-                    taskFrequency, taskInfo.maxExecutionTimeUs, taskInfo.averageExecutionTime10thUs / 10,
+                    taskFrequency, (uint32_t)taskInfo.maxExecutionTimeUs, (uint32_t)taskInfo.averageExecutionTime10thUs / 10,
                     maxLoad/10, maxLoad%10, averageLoad/10, averageLoad%10,
                     taskInfo.totalExecutionTimeUs / 1000);
 #endif
@@ -4886,7 +4887,7 @@ static void cliTasks(const char *cmdName, char *cmdline)
     if (systemConfig()->task_statistics) {
         cfCheckFuncInfo_t checkFuncInfo;
         getCheckFuncInfo(&checkFuncInfo);
-        cliPrintLinef("RX Check Function %19d %7d %25d", checkFuncInfo.maxExecutionTimeUs, checkFuncInfo.averageExecutionTimeUs, checkFuncInfo.totalExecutionTimeUs / 1000);
+        cliPrintLinef("RX Check Function %19d %7d %25d", (uint32_t)checkFuncInfo.maxExecutionTimeUs, (uint32_t)checkFuncInfo.averageExecutionTimeUs, (uint32_t)checkFuncInfo.totalExecutionTimeUs / 1000);
         cliPrintLinef("Total (excluding SERIAL) %33d.%1d%%", averageLoadSum/10, averageLoadSum%10);
         if (debugMode == DEBUG_SCHEDULER_DETERMINISM) {
             extern int32_t schedLoopStartCycles, taskGuardCycles;

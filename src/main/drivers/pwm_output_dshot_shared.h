@@ -45,7 +45,6 @@ FAST_DATA_ZERO_INIT extern dshotDMAHandlerCycleCounters_t dshotDMAHandlerCycleCo
 
 uint8_t getTimerIndex(TIM_TypeDef *timer);
 motorDmaOutput_t *getMotorDmaOutput(uint8_t index);
-void dshotEnableChannels(uint8_t motorCount);
 
 #ifdef USE_DSHOT_TELEMETRY
 void pwmDshotSetDirectionOutput(
@@ -53,7 +52,7 @@ void pwmDshotSetDirectionOutput(
 #ifndef USE_DSHOT_TELEMETRY
 #if defined(STM32F7) || defined(STM32H7)
     , LL_TIM_OC_InitTypeDef* pOcInit, LL_DMA_InitTypeDef* pDmaInit
-#else
+#elif !define(HPMicro)
     , TIM_OCInitTypeDef *pOcInit, DMA_InitTypeDef* pDmaInit
 #endif
 #endif

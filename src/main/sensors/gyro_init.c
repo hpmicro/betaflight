@@ -90,7 +90,11 @@
 // The gyro buffer is split 50/50, the first half for the transmit buffer, the second half for the receive buffer
 // This buffer is large enough for the gyros currently supported in accgyro_mpu.c but should be reviewed id other
 // gyro types are supported with SPI DMA.
+#ifdef HPMicro
+#define GYRO_BUF_SIZE 64
+#else
 #define GYRO_BUF_SIZE 32
+#endif
 
 static gyroDetectionFlags_t gyroDetectionFlags = GYRO_NONE_MASK;
 
@@ -463,10 +467,14 @@ STATIC_UNIT_TESTED gyroHardware_e gyroDetect(gyroDev_t *dev)
 #endif
 
 #if defined(USE_GYRO_SPI_ICM42605) || defined(USE_GYRO_SPI_ICM42688P)
+    case GYRO_ICM40609:
     case GYRO_ICM42605:
     case GYRO_ICM42688P:
         if (icm426xxSpiGyroDetect(dev)) {
             switch (dev->mpuDetectionResult.sensor) {
+            case ICM_40609_SPI:
+                gyroHardware = GYRO_ICM40609;
+                break;
             case ICM_42605_SPI:
                 gyroHardware = GYRO_ICM42605;
                 break;

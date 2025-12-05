@@ -43,11 +43,18 @@
 #define DEFIO_REC_INDEXED(idx) (ioRecs + (idx))
 
 // ioTag_t accessor macros
+#ifdef HPMicro
+#define DEFIO_TAG_MAKE(gpioid, pin) ((ioTag_t)((((gpioid) + 0) << 8) | (pin)))
+#define DEFIO_TAG_ISEMPTY(tag) (!(tag))
+#define DEFIO_TAG_GPIOID(tag) (((tag) >> 8))
+#define DEFIO_TAG_PIN(tag) ((tag) & 0xff)
+#include "hpm_gpio_drv.h"
+#else
 #define DEFIO_TAG_MAKE(gpioid, pin) ((ioTag_t)((((gpioid) + 1) << 4) | (pin)))
 #define DEFIO_TAG_ISEMPTY(tag) (!(tag))
 #define DEFIO_TAG_GPIOID(tag) (((tag) >> 4) - 1)
 #define DEFIO_TAG_PIN(tag) ((tag) & 0x0f)
-
+#endif
 // TARGET must define used pins
 #include "target.h"
 // include template-generated macros for IO pins

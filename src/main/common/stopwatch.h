@@ -26,15 +26,28 @@
 
 typedef struct stopwatch_s {
     bool isRunning;
+#ifdef HPMicro
+    uint64_t start;
+    uint64_t stop;
+    uint64_t elapsed;
+#else
     uint32_t start;
     uint32_t stop;
     uint32_t elapsed;
+#endif
 } stopwatch_t;
 
 void stopwatchInit(stopwatch_t *watch);
 void stopwatchReset(stopwatch_t *watch);
+#ifdef HPMicro
+uint64_t stopwatchStart(stopwatch_t *watch);
+uint64_t stopwatchStop(stopwatch_t *watch);
+uint64_t stopwatchGetCycles(stopwatch_t *watch);
+uint64_t stopwatchGetMicros(stopwatch_t *watch);
+#else
 uint32_t stopwatchStart(stopwatch_t *watch);
 uint32_t stopwatchStop(stopwatch_t *watch);
 uint32_t stopwatchGetCycles(stopwatch_t *watch);
 uint32_t stopwatchGetMicros(stopwatch_t *watch);
+#endif
 float stopwatchGetMicrosf(stopwatch_t *watch);

@@ -39,7 +39,40 @@ void stopwatchReset(stopwatch_t *watch)
     watch->isRunning = false;
     watch->elapsed = 0;
 }
+#ifdef HPMicro
+uint64_t stopwatchStart(stopwatch_t *watch)
+{
+    if (watch->isRunning == false) {
+        watch->isRunning = true;
+        watch->start = getCycleCounter();
+    }
+    return watch->start;
+}
 
+uint64_t stopwatchStop(stopwatch_t *watch)
+{
+    if (watch->isRunning == true) {
+        watch->stop = getCycleCounter();
+        watch->elapsed += cmpTimeCycles(watch->stop, watch->start);
+        watch->isRunning = false;
+    }
+    return watch->stop;
+}
+
+uint64_t stopwatchGetCycles(stopwatch_t *watch)
+{
+    if (watch->isRunning == true) {
+        return watch->elapsed + cmpTimeCycles(getCycleCounter(), watch->start);
+    } else {
+        return watch->elapsed;
+    }
+}
+
+uint64_t stopwatchGetMicros(stopwatch_t *watch)
+{
+    return clockCyclesToMicros(stopwatchGetCycles(watch));
+}
+#else
 uint32_t stopwatchStart(stopwatch_t *watch)
 {
     if (watch->isRunning == false) {
@@ -72,7 +105,7 @@ uint32_t stopwatchGetMicros(stopwatch_t *watch)
 {
     return clockCyclesToMicros(stopwatchGetCycles(watch));
 }
-
+#endif
 float stopwatchGetMicrosf(stopwatch_t *watch)
 {
     return clockCyclesToMicrosf(stopwatchGetCycles(watch));

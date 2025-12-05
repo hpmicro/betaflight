@@ -6,7 +6,6 @@
 #include <ctype.h>
 #include <float.h>
 #include <math.h>
-#include <memory.h>
 
 #define OLC_kEncodingBase 20
 #define OLC_kGridCols 4

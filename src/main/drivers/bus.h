@@ -50,7 +50,11 @@ typedef struct busDevice_s {
     union {
         struct busSpi_s {
             SPI_TypeDef *instance;
+#ifdef HPMicro
+            uint32_t speed;
+#else
             uint16_t speed;
+#endif
             bool leadingEdge;
         } spi;
         struct busI2C_s {
@@ -83,7 +87,11 @@ typedef struct extDevice_s {
     busDevice_t *bus;
     union {
         struct extSpi_s {
+#ifdef HPMicro
+            uint32_t speed;
+#else
             uint16_t speed;
+#endif
             IO_t csnPin;
             bool leadingEdge;
         } spi;

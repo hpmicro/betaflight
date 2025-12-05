@@ -21,8 +21,10 @@
 #pragma once
 
 #include <stdint.h>
-
-#if !defined(UNIT_TEST)
+#ifdef HPMicro
+#include "hpm_interrupt.h"
+#endif
+#if !defined(UNIT_TEST) && !defined(HPMicro)
 // BASEPRI manipulation functions
 // only set_BASEPRI is implemented in device library. It does always create memory barrier
 // missing versions are implemented here
@@ -41,6 +43,18 @@ __attribute__( ( always_inline ) ) static inline void __set_BASEPRI_MAX_nb(uint3
 
 #endif
 
+#ifdef HPMicro
+__attribute__( ( always_inline ) ) static inline void __set_BASEPRI_nb(uint32_t basePri)
+{
+   (void)basePri;
+}
+
+// set BASEPRI_MAX register, do not create memory barrier
+__attribute__( ( always_inline ) ) static inline void __set_BASEPRI_MAX_nb(uint32_t basePri)
+{
+   (void)basePri;
+}
+#endif
 #if defined(UNIT_TEST)
 // atomic related functions for unittest.
 
@@ -82,7 +96,37 @@ static inline uint8_t __basepriSetRetVal(uint8_t prio)
     }
     return 1;
 }
+#elif defined(HPMicro)
 
+// restore BASEPRI (called as cleanup function), with global memory barrier
+static inline void __basepriRestoreMem(uint8_t *val)
+{
+    (void)val;
+    enable_global_irq(CSR_MSTATUS_MIE_MASK);
+}
+
+// set BASEPRI_MAX, with global memory barrier, returns true
+static inline uint8_t __basepriSetMemRetVal(uint8_t prio)
+{
+    (void)prio;
+    disable_global_irq(CSR_MSTATUS_MIE_MASK);
+    return 1;
+}
+
+// restore BASEPRI (called as cleanup function), no memory barrier
+static inline void __basepriRestore(uint8_t *val)
+{
+    (void)val;
+    enable_global_irq(CSR_MSTATUS_MIE_MASK);
+}
+
+// set BASEPRI_MAX, no memory barrier, returns true
+static inline uint8_t __basepriSetRetVal(uint8_t prio)
+{
+    (void)prio;
+    disable_global_irq(CSR_MSTATUS_MIE_MASK);
+    return 1;
+}
 #else
 // ARM BASEPRI manipulation
 
@@ -118,7 +162,7 @@ static inline uint8_t __basepriSetRetVal(uint8_t prio)
 // All exit paths are handled. Implemented as for loop, does intercept break and continue
 // Full memory barrier is placed at start and at exit of block
 // __unused__ attribute is used to supress CLang warning
-#define ATOMIC_BLOCK(prio) for ( uint8_t __basepri_save __attribute__ ((__cleanup__ (__basepriRestoreMem), __unused__)) = __get_BASEPRI(), \
+#define ATOMIC_BLOCK(prio) for ( uint8_t __basepri_save __attribute__ ((__cleanup__ (__basepriRestoreMem), __unused__)) = read_csr(CSR_MSTATUS), \
                                      __ToDo = __basepriSetMemRetVal(prio); __ToDo ; __ToDo = 0 )
 
 // Run block with elevated BASEPRI (using BASEPRI_MAX), but do not create memory barrier.
@@ -127,7 +171,7 @@ static inline uint8_t __basepriSetRetVal(uint8_t prio)
 // - use ATOMIC_BARRIER or volatile to protect used variables
 // - gcc 4.8.4 does write all values in registers to memory before 'asm volatile', so this optimization does not help much
 // - gcc 5 and later works as intended, generating quite optimal code
-#define ATOMIC_BLOCK_NB(prio) for ( uint8_t __basepri_save __attribute__ ((__cleanup__ (__basepriRestore), __unused__)) = __get_BASEPRI(), \
+#define ATOMIC_BLOCK_NB(prio) for ( uint8_t __basepri_save __attribute__ ((__cleanup__ (__basepriRestore), __unused__)) = read_csr(CSR_MSTATUS)(), \
                                     __ToDo = __basepriSetRetVal(prio); __ToDo ; __ToDo = 0 ) \
 
 // ATOMIC_BARRIER

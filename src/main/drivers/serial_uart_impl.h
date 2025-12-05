@@ -87,6 +87,19 @@
 #define UART_TX_BUFFER_SIZE     256
 #endif
 #endif
+#elif defined(HPMicro)
+#define UARTDEV_COUNT_MAX       9  // UARTs 1 to 5 + LPUART1 (index 9)
+#define UARTHARDWARE_MAX_PINS   5
+#ifndef UART_RX_BUFFER_SIZE
+#define UART_RX_BUFFER_SIZE     256
+#endif
+#ifndef UART_TX_BUFFER_SIZE
+#ifdef USE_MSP_DISPLAYPORT
+#define UART_TX_BUFFER_SIZE     1280
+#else
+#define UART_TX_BUFFER_SIZE     256
+#endif
+#endif
 #else
 #error unknown MCU family
 #endif
@@ -195,6 +208,10 @@ typedef struct uartHardware_s {
 
 #if !defined(STM32F7)
     uint8_t af;
+#if defined(HPMicro)
+    uint8_t bioc_func;
+    uint8_t pioc_func;
+#endif
 #endif
 
 #if defined(STM32F7) || defined(STM32H7) || defined(STM32G4)

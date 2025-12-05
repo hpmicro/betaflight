@@ -27,7 +27,20 @@
 
 #include "config/config_eeprom.h"
 #include "config/config_streamer.h"
+#if defined(HPMicro)
+#include "hpm_interrupt.h"
+#include "board.h"
+#include "hpm_clock_drv.h"
+#include "hpm_romapi.h"
 
+#define HPMICRO_XPI0_BASE    0x80000000
+
+static xpi_nor_config_t s_xpi_nor_config;
+uint32_t flash_size;
+uint32_t sector_size;
+uint32_t page_size;
+volatile bool flash_option_inited = false;
+#endif
 #if !defined(CONFIG_IN_FLASH)
 #if defined(CONFIG_IN_RAM) && defined(PERSISTENT)
 PERSISTENT uint8_t eepromData[EEPROM_SIZE];
@@ -44,6 +57,24 @@ uint8_t eepromData[EEPROM_SIZE];
 void config_streamer_init(config_streamer_t *c)
 {
     memset(c, 0, sizeof(*c));
+#ifdef HPMicro
+    xpi_nor_config_option_t option;
+    option.header.U = BOARD_APP_XPI_NOR_CFG_OPT_HDR;
+    option.option0.U = BOARD_APP_XPI_NOR_CFG_OPT_OPT0;
+    option.option1.U = BOARD_APP_XPI_NOR_CFG_OPT_OPT1;
+
+    XPI_Type *base = BOARD_APP_XPI_NOR_XPI_BASE;
+
+    hpm_stat_t status = rom_xpi_nor_auto_config(base, &s_xpi_nor_config, &option);
+    if (status != status_success) {
+        while(1);
+    }
+    rom_xpi_nor_get_property(BOARD_APP_XPI_NOR_XPI_BASE, &s_xpi_nor_config, xpi_nor_property_total_size, &flash_size);
+    rom_xpi_nor_get_property(BOARD_APP_XPI_NOR_XPI_BASE, &s_xpi_nor_config, xpi_nor_property_page_size, &page_size);
+
+    rom_xpi_nor_get_property(BOARD_APP_XPI_NOR_XPI_BASE, &s_xpi_nor_config, xpi_nor_property_sector_size, &sector_size);    
+		flash_option_inited = true;
+#endif
 }
 
 void config_streamer_start(config_streamer_t *c, uintptr_t base, int size)
@@ -59,6 +90,9 @@ void config_streamer_start(config_streamer_t *c, uintptr_t base, int size)
         HAL_FLASH_Unlock();
 #elif defined(AT32F4)
         flash_unlock();
+#elif defined(HPMicro)
+        disable_global_irq(CSR_MSTATUS_MIE_MASK);
+        __asm volatile ("fence.i");
 #else
         FLASH_Unlock();
 #endif
@@ -80,6 +114,8 @@ void config_streamer_start(config_streamer_t *c, uintptr_t base, int size)
 #elif defined(AT32F4)
     flash_flag_clear(FLASH_ODF_FLAG | FLASH_PRGMERR_FLAG | FLASH_EPPERR_FLAG);
 #elif defined(UNIT_TEST) || defined(SIMULATOR_BUILD)
+    // NOP
+#elif defined(HPMicro)
     // NOP
 #else
 # error "Unsupported CPU"
@@ -478,6 +514,23 @@ static int write_word(config_streamer_t *c, config_streamer_buffer_align_type_t 
     if (status != FLASH_OPERATE_DONE) {
         return -2;
     }
+#elif defined(HPMicro)
+    hpm_stat_t status1;
+    if (c->address % sector_size == 0) {
+        status1 = rom_xpi_nor_erase(BOARD_APP_XPI_NOR_XPI_BASE, xpi_xfer_channel_auto, &s_xpi_nor_config, c->address - HPMICRO_XPI0_BASE, sector_size);
+        
+        __asm volatile ("fence.i");
+        if (status1 != status_success) {
+            while(1);
+        }
+    }
+    STATIC_ASSERT(CONFIG_STREAMER_BUFFER_SIZE == sizeof(uint32_t) * 1,  "CONFIG_STREAMER_BUFFER_SIZE does not match written size");
+    status1 = rom_xpi_nor_program(BOARD_APP_XPI_NOR_XPI_BASE, xpi_xfer_channel_auto, &s_xpi_nor_config, buffer, c->address - HPMICRO_XPI0_BASE, CONFIG_STREAMER_BUFFER_SIZE);
+
+    __asm volatile ("fence.i");
+    if (status1 != status_success) {
+        while(1);
+    }
 #else // !STM32H7 && !STM32F7 && !STM32G4
     if (c->address % FLASH_PAGE_SIZE == 0) {
         const FLASH_Status status = FLASH_EraseSector(getFLASHSectorForEEPROM(), VoltageRange_3); //0x08080000 to 0x080A0000
@@ -543,6 +596,9 @@ int config_streamer_finish(config_streamer_t *c)
         HAL_FLASH_Lock();
 #elif defined(AT32F4)
         flash_lock();
+#elif defined(HPMicro)
+        __asm volatile ("fence.i");
+        enable_global_irq(CSR_MSTATUS_MIE_MASK);
 #else
         FLASH_Lock();
 #endif

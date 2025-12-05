@@ -24,6 +24,8 @@
 
 #include "drivers/io_types.h"
 #include "drivers/time.h"
+#include "hpm_adc12_drv.h"
+#include "hpm_adc16_drv.h"
 
 #ifndef ADC_INSTANCE
 #define ADC_INSTANCE                ADC1
@@ -82,14 +84,15 @@ typedef enum {
     ADC_TEMPSENSOR = 4,
     ADC_VREFINT = 5,
     // ADC_VBAT4 = 6,
-
+#elif defined(HPMicro)
+    ADC_CHANNEL_INTERNAL_FIRST_ID = 4,
 #endif
     ADC_CHANNEL_COUNT
 } AdcChannel;
 
 typedef struct adcOperatingConfig_s {
     ioTag_t tag;
-#if defined(STM32H7) || defined(STM32G4) || defined(AT32F435)
+#if defined(STM32H7) || defined(STM32G4) || defined(AT32F435) || defined(HPMicro)
     ADCDevice adcDevice;        // ADCDEV_x for this input
     uint32_t adcChannel;        // Channel number for this input. Note that H7 and G4 HAL requires this to be 32-bit encoded number.
 #else
@@ -97,7 +100,7 @@ typedef struct adcOperatingConfig_s {
 #endif
     uint8_t dmaIndex;           // index into DMA buffer in case of sparse channels
     bool enabled;
-    uint8_t sampleTime;
+    uint32_t sampleTime;
 } adcOperatingConfig_t;
 
 struct adcConfig_s;

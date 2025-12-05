@@ -43,7 +43,9 @@
 #include "drivers/timer.h"
 
 #include "drivers/dshot_command.h"
+#ifndef HPMicro
 #include "drivers/nvic.h"
+#endif
 
 #include "flight/mixer.h"
 
@@ -114,7 +116,7 @@ FAST_CODE uint16_t prepareDshotPacket(dshotProtocolControl_t *pcb)
 {
     uint16_t packet;
 
-    ATOMIC_BLOCK(NVIC_PRIO_DSHOT_DMA) {
+    ATOMIC_BLOCK(6) {
         packet = (pcb->value << 1) | (pcb->requestTelemetry ? 1 : 0);
         pcb->requestTelemetry = false;    // reset telemetry request to make sure it's triggered only once in a row
     }
@@ -404,7 +406,7 @@ float erpmToRpm(uint32_t erpm)
 
 FAST_DATA_ZERO_INIT dshotTelemetryQuality_t dshotTelemetryQuality[MAX_SUPPORTED_MOTORS];
 
-int16_t getDshotTelemetryMotorInvalidPercent(uint8_t motorIndex)
+FAST_CODE int16_t getDshotTelemetryMotorInvalidPercent(uint8_t motorIndex)
 {
     int16_t invalidPercent = 0;
 

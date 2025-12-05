@@ -122,7 +122,11 @@ static void mpu6050FindRevision(gyroDev_t *gyro)
 busStatus_e mpuIntCallback(uint32_t arg)
 {
     gyroDev_t *gyro = (gyroDev_t *)arg;
+#ifdef HPMicro
+    int64_t gyroDmaDuration = cmpTimeCycles(getCycleCounter(), gyro->gyroLastEXTI);
+#else
     int32_t gyroDmaDuration = cmpTimeCycles(getCycleCounter(), gyro->gyroLastEXTI);
+#endif
 
     if (gyroDmaDuration > gyro->gyroDmaMaxDuration) {
         gyro->gyroDmaMaxDuration = gyroDmaDuration;
@@ -139,7 +143,11 @@ static void mpuIntExtiHandler(extiCallbackRec_t *cb)
 
     // Ideally we'd use a timer to capture such information, but unfortunately the port used for EXTI interrupt does
     // not have an associated timer
+#ifdef HPMicro
+    uint64_t nowCycles = getCycleCounter();
+#else
     uint32_t nowCycles = getCycleCounter();
+#endif
     int32_t gyroLastPeriod = cmpTimeCycles(nowCycles, gyro->gyroLastEXTI);
     // This detects the short (~79us) EXTI interval of an MPU6xxx gyro
     if ((gyro->gyroShortPeriod == 0) || (gyroLastPeriod < gyro->gyroShortPeriod)) {

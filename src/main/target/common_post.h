@@ -59,23 +59,23 @@
 #define FAST_CODE_NOINLINE          NOINLINE
 
 #else
-#define FAST_CODE
-#define FAST_CODE_PREF
-#define FAST_CODE_NOINLINE
+#define FAST_CODE                   __attribute__((section(".fast")))
+#define FAST_CODE_PREF              __attribute__((section(".fast")))
+#define FAST_CODE_NOINLINE          __attribute__((section(".fast"))) 
 #endif // USE_ITCM_RAM
 
 #ifdef USE_CCM_CODE
 #define CCM_CODE                    __attribute__((section(".ccm_code")))
 #else
-#define CCM_CODE
+#define CCM_CODE                    __attribute__((section(".fast"))) 
 #endif
 
 #ifdef USE_FAST_DATA
 #define FAST_DATA_ZERO_INIT         __attribute__ ((section(".fastram_bss"), aligned(4)))
 #define FAST_DATA                   __attribute__ ((section(".fastram_data"), aligned(4)))
 #else
-#define FAST_DATA_ZERO_INIT
-#define FAST_DATA
+#define FAST_DATA_ZERO_INIT         __attribute__ ((section(".fast_ram.bss"), aligned(4)))
+#define FAST_DATA                   __attribute__ ((section(".fast_ram"), aligned(4)))
 #endif // USE_FAST_DATA
 
 /*

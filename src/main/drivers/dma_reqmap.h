@@ -63,6 +63,7 @@ struct timerHardware_s;
 
 dmaoptValue_t dmaoptByTag(ioTag_t ioTag);
 const dmaChannelSpec_t *dmaGetChannelSpecByPeripheral(dmaPeripheral_e device, uint8_t index, int8_t opt);
+uint32_t dmaGetMuxSrcSpecByPeripheral(dmaPeripheral_e device, uint8_t index);
 const dmaChannelSpec_t *dmaGetChannelSpecByTimerValue(TIM_TypeDef *tim, uint8_t channel, dmaoptValue_t dmaopt);
 const dmaChannelSpec_t *dmaGetChannelSpecByTimer(const struct timerHardware_s *timer);
 dmaoptValue_t dmaGetOptionByTimer(const struct timerHardware_s *timer);

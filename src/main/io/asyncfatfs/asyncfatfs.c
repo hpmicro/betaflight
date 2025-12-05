@@ -75,7 +75,7 @@
  * How many blocks will we write in a row before we bother using the SDcard's multiple block write method?
  * If this define is omitted, this disables multi-block write.
  */
-#define AFATFS_MIN_MULTIPLE_BLOCK_WRITE_COUNT 4
+//#define AFATFS_MIN_MULTIPLE_BLOCK_WRITE_COUNT 4
 
 #define AFATFS_FILES_PER_DIRECTORY_SECTOR (AFATFS_SECTOR_SIZE / sizeof(fatDirectoryEntry_t))
 
@@ -462,7 +462,7 @@ typedef struct afatfs_t {
 #ifdef STM32H7
     uint8_t *cache;
 #else
-    uint8_t cache[AFATFS_SECTOR_SIZE * AFATFS_NUM_CACHE_SECTORS];
+    __attribute__((aligned(32))) uint8_t cache[AFATFS_SECTOR_SIZE * AFATFS_NUM_CACHE_SECTORS];
 #endif
     afatfsCacheBlockDescriptor_t cacheDescriptor[AFATFS_NUM_CACHE_SECTORS];
     uint32_t cacheTimer;
@@ -939,6 +939,7 @@ static void afatfs_fileGetCursorClusterAndSector(afatfsFilePtr_t file, uint32_t 
  */
 static afatfsOperationStatus_e afatfs_cacheSector(uint32_t physicalSectorIndex, uint8_t **buffer, uint8_t sectorFlags, uint32_t eraseCount)
 {
+    (void)eraseCount;
     // We never write to the MBR, so any attempt to write there is an asyncfatfs bug
     if (!afatfs_assert((sectorFlags & AFATFS_CACHE_WRITE) == 0 || physicalSectorIndex != 0)) {
         return AFATFS_OPERATION_FAILURE;

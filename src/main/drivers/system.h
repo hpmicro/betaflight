@@ -70,7 +70,11 @@ float clockCyclesToMicrosf(int32_t clockCycles);
 int32_t clockCyclesTo10thMicros(int32_t clockCycles);
 int32_t clockCyclesTo100thMicros(int32_t clockCycles);
 uint32_t clockMicrosToCycles(uint32_t micros);
+#if defined(HPMicro)
+uint64_t getCycleCounter(void);
+#else
 uint32_t getCycleCounter(void);
+#endif
 #if defined(STM32H7) || defined(STM32G4)
 void systemProcessResetReason(void);
 #endif

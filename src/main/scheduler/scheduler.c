@@ -25,7 +25,7 @@
 #include <string.h>
 #include <limits.h>
 #include <math.h>
-
+#include <stdio.h>
 #include "platform.h"
 
 #include "drivers/accgyro/accgyro.h"
@@ -80,17 +80,17 @@ static FAST_DATA_ZERO_INIT task_t *currentTask = NULL;
 static FAST_DATA_ZERO_INIT bool ignoreCurrentTaskExecRate;
 static FAST_DATA_ZERO_INIT bool ignoreCurrentTaskExecTime;
 
-int32_t schedLoopStartCycles;
-static int32_t schedLoopStartMinCycles;
-static int32_t schedLoopStartMaxCycles;
-static uint32_t schedLoopStartDeltaDownCycles;
-static uint32_t schedLoopStartDeltaUpCycles;
+int64_t schedLoopStartCycles;
+static int64_t schedLoopStartMinCycles;
+static int64_t schedLoopStartMaxCycles;
+static uint64_t schedLoopStartDeltaDownCycles;
+static uint64_t schedLoopStartDeltaUpCycles;
 
-int32_t taskGuardCycles;
-static int32_t taskGuardMinCycles;
-static int32_t taskGuardMaxCycles;
-static uint32_t taskGuardDeltaDownCycles;
-static uint32_t taskGuardDeltaUpCycles;
+int64_t taskGuardCycles;
+static int64_t taskGuardMinCycles;
+static int64_t taskGuardMaxCycles;
+static uint64_t taskGuardDeltaDownCycles;
+static uint64_t taskGuardDeltaUpCycles;
 
 FAST_DATA_ZERO_INIT uint16_t averageSystemLoadPercent = 0;
 
@@ -99,8 +99,8 @@ STATIC_UNIT_TESTED FAST_DATA_ZERO_INIT int taskQueueSize = 0;
 
 static FAST_DATA_ZERO_INIT bool gyroEnabled;
 
-static int32_t desiredPeriodCycles;
-static uint32_t lastTargetCycles;
+static int64_t desiredPeriodCycles;
+static uint64_t lastTargetCycles;
 
 static uint8_t skippedRxAttempts = 0;
 #ifdef USE_OSD
@@ -472,12 +472,12 @@ FAST_CODE void scheduler(void)
     const timeUs_t schedulerStartTimeUs = micros();
 #endif
     timeUs_t currentTimeUs;
-    uint32_t nowCycles;
+    uint64_t nowCycles;
     timeUs_t taskExecutionTimeUs = 0;
     task_t *selectedTask = NULL;
     uint16_t selectedTaskDynamicPriority = 0;
-    uint32_t nextTargetCycles = 0;
-    int32_t schedLoopRemainingCycles;
+    uint64_t nextTargetCycles = 0;
+    int64_t schedLoopRemainingCycles;
     bool firstSchedulingOpportunity = false;
 
 #if defined(UNIT_TEST)

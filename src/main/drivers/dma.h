@@ -53,7 +53,11 @@ struct dmaChannelDescriptor_s;
 typedef void (*dmaCallbackHandlerFuncPtr)(struct dmaChannelDescriptor_s *channelDescriptor);
 
 typedef struct dmaChannelDescriptor_s {
+#ifdef HPMicro
+    DMA_Type*                   dma;
+#else
     DMA_TypeDef*                dma;
+#endif
     dmaResource_t               *ref;
 #if defined(STM32F4) || defined(STM32F7) || defined(STM32G4) || defined(STM32H7)
     uint8_t                     stream;
@@ -61,11 +65,19 @@ typedef struct dmaChannelDescriptor_s {
     uint32_t                    channel;
     dmaCallbackHandlerFuncPtr   irqHandlerCallback;
     uint8_t                     flagsShift;
+#ifdef HPMicro
+    uint32_t                   irqN;
+#else
     IRQn_Type                   irqN;
+#endif
     uint32_t                    userParam;
     resourceOwner_t             owner;
     uint8_t                     resourceIndex;
     uint32_t                    completeFlag;
+#ifdef HPMicro
+    uint32_t                    rcc;
+    uint32_t                    int_stat;
+#endif
 #if defined(USE_ATBSP_DRIVER)
     dmamux_channel_type         *dmamux;
 #endif
@@ -169,16 +181,49 @@ uint32_t dmaGetChannel(const uint8_t channel);
 
 typedef enum {
     DMA_NONE = 0,
-    DMA1_CH1_HANDLER = 1,
+    DMA1_CH1_HANDLER = 1,    /* HDMA */
     DMA1_CH2_HANDLER,
     DMA1_CH3_HANDLER,
     DMA1_CH4_HANDLER,
     DMA1_CH5_HANDLER,
     DMA1_CH6_HANDLER,
     DMA1_CH7_HANDLER,
+    DMA1_CH8_HANDLER,
+#if defined(HPMicro)
+    DMA2_CH1_HANDLER,       /* XDMA */
+    DMA2_CH2_HANDLER,
+    DMA2_CH3_HANDLER,
+    DMA2_CH4_HANDLER,
+    DMA2_CH5_HANDLER,
+    DMA2_CH6_HANDLER,
+    DMA2_CH7_HANDLER,
+    DMA2_CH8_HANDLER,
+    DMA_LAST_HANDLER = DMA2_CH8_HANDLER
+#else
+    DMA1_CH7_HANDLER,
     DMA_LAST_HANDLER = DMA1_CH7_HANDLER
+#endif
 } dmaIdentifier_e;
 
+#ifdef HPMicro
+#define HPM_XDMA_Channel0       ((dmaResource_t *)0x10001000)
+#define HPM_XDMA_Channel1       ((dmaResource_t *)0x10001001)
+#define HPM_XDMA_Channel2       ((dmaResource_t *)0x10001002)
+#define HPM_XDMA_Channel3       ((dmaResource_t *)0x10001003)
+#define HPM_XDMA_Channel4       ((dmaResource_t *)0x10001004)
+#define HPM_XDMA_Channel5       ((dmaResource_t *)0x10001005)
+#define HPM_XDMA_Channel6       ((dmaResource_t *)0x10001006)
+#define HPM_XDMA_Channel7       ((dmaResource_t *)0x10001007)
+
+#define HPM_HDMA_Channel0       ((dmaResource_t *)0x10000000)
+#define HPM_HDMA_Channel1       ((dmaResource_t *)0x10000001)
+#define HPM_HDMA_Channel2       ((dmaResource_t *)0x10000002)
+#define HPM_HDMA_Channel3       ((dmaResource_t *)0x10000003)
+#define HPM_HDMA_Channel4       ((dmaResource_t *)0x10000004)
+#define HPM_HDMA_Channel5       ((dmaResource_t *)0x10000005)
+#define HPM_HDMA_Channel6       ((dmaResource_t *)0x10000006)
+#define HPM_HDMA_Channel7       ((dmaResource_t *)0x10000007)
+#endif
 #define DMA_DEVICE_NO(x)    ((((x)-1) / 7) + 1)
 #define DMA_DEVICE_INDEX(x) ((((x)-1) % 7) + 1)
 
@@ -187,7 +232,19 @@ typedef enum {
 #define DMA_OUTPUT_INDEX    0
 #define DMA_OUTPUT_STRING   "DMA%d Channel %d:"
 #define DMA_INPUT_STRING    "DMA%d_CH%d"
-
+#ifdef HPMicro
+#define DEFINE_DMA_CHANNEL(d, c, i, r) { \
+    .dma = d, \
+    .ref = (dmaResource_t *)d ## _Channel ## c, \
+    .channel = c, \
+    .irqHandlerCallback = NULL, \
+    .irqN = i, \
+    .userParam = 0, \
+    .owner.owner = 0, \
+    .owner.resourceIndex = 0, \
+    .rcc = r, \
+    }
+#else
 #define DEFINE_DMA_CHANNEL(d, c, f) { \
     .dma = d, \
     .ref = (dmaResource_t *)d ## _Channel ## c, \
@@ -199,6 +256,7 @@ typedef enum {
     .owner.resourceIndex = 0 \
     }
 
+#endif
 #define DMA_HANDLER_CODE
 
 #define DEFINE_DMA_IRQ_HANDLER(d, c, i) DMA_HANDLER_CODE void DMA ## d ## _Channel ## c ## _IRQHandler(void) {\
@@ -279,7 +337,17 @@ uint32_t dmaGetChannel(const uint8_t channel);
 #define xLL_EX_DMA_EnableIT_TC(dmaResource) LL_EX_DMA_EnableIT_TC((DMA_ARCH_TYPE *)(dmaResource))
 
 #elif defined(USE_ATBSP_DRIVER)
+#elif defined(HPMicro)
 
+void xDMA_DeInit(DMA_ARCH_TYPE * dmaResource);
+void xDMA_DeInit(DMA_ARCH_TYPE * dmaResource);
+void xDMA_Cmd(DMA_ARCH_TYPE * dmaResource, int newState);
+void xDMA_ITConfig(DMA_ARCH_TYPE * dmaResource, int flags, int newState);
+uint32_t xDMA_GetCurrDataCounter(DMA_ARCH_TYPE * dmaResource);
+void xDMA_SetCurrDataCounter(DMA_ARCH_TYPE * dmaResource, int count);
+uint32_t xDMA_GetFlagStatus(DMA_ARCH_TYPE * dmaResource, int flags);
+void xDMA_ClearFlag(DMA_ARCH_TYPE * dmaResource, int flags);
+void xDMA_MemoryTargetConfig(DMA_ARCH_TYPE * dmaResource, int address, int target);
 #else
 
 #define xDMA_Init(dmaResource, initStruct) DMA_Init((DMA_ARCH_TYPE *)(dmaResource), initStruct)

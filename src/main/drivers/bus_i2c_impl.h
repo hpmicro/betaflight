@@ -24,21 +24,29 @@
 
 #include "drivers/io_types.h"
 #include "drivers/rcc_types.h"
-
+#ifdef HPMicro
+#include "hpm_i2c_drv.h"
+#endif
 #define I2C_TIMEOUT_US          10000
 #define I2C_TIMEOUT_SYS_TICKS   (I2C_TIMEOUT_US / 1000)
 
-#define I2C_PIN_SEL_MAX 4
+#define I2C_PIN_SEL_MAX 6
 
 typedef struct i2cPinDef_s {
     ioTag_t ioTag;
 #if defined(STM32F4) || defined(STM32H7) || defined(STM32G4) || defined(AT32F4)
     uint8_t af;
 #endif
+#ifdef HPMicro
+    uint32_t af;
+    uint32_t af2;
+#endif
 } i2cPinDef_t;
 
 #if defined(STM32F4) || defined(STM32H7) || defined(STM32G4) || defined(AT32F4)
 #define I2CPINDEF(pin, af) { DEFIO_TAG_E(pin), af }
+#ifdef HPMicro
+#define I2CPINDEF(pin, af, af2) { DEFIO_TAG_E(pin), af, af2 }
 #else
 #define I2CPINDEF(pin) { DEFIO_TAG_E(pin) }
 #endif
@@ -69,6 +77,13 @@ typedef struct i2cState_s {
 } i2cState_t;
 #endif
 
+/**
+  * @brief i2c transmission status
+  */
+typedef enum {
+	I2C_START,
+	I2C_END
+} i2cState_t;
 typedef struct i2cDevice_s {
     const i2cHardware_t *hardware;
     I2C_TypeDef *reg;
@@ -77,12 +92,18 @@ typedef struct i2cDevice_s {
 #if defined(STM32F4) || defined(STM32H7) || defined(STM32G4) || defined(AT32F4)
     uint8_t sclAF;
     uint8_t sdaAF;
+#elif defined(HPMicro)
+    uint32_t sclAF;
+    uint32_t sdaAF;
+    uint32_t sclAF2;
+    uint32_t sdaAF2;
+    uint8_t nirq;
 #endif
     bool pullUp;
     uint16_t clockSpeed;
 
     // MCU/Driver dependent member follows
-#if defined(STM32F4)
+#if defined(STM32F4) || defined (HPMicro)
     i2cState_t state;
 #endif
 #if defined(USE_HAL_DRIVER) || defined(AT32F4)

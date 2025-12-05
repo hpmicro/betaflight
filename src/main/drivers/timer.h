@@ -28,6 +28,7 @@
 #include "drivers/rcc_types.h"
 #include "drivers/resource.h"
 
+#include "hpm_trgm_regs.h"
 #include "timer_def.h"
 
 #include "pg/timerio.h"
@@ -75,20 +76,41 @@ typedef struct timerHardware_s {
     TIM_TypeDef *tim;
     ioTag_t tag;
     uint8_t channel;
+#ifdef HPMicro
+    DMA_Type *dma_base;
+    uint32_t gptmr_clock;
+    GPTMR_Type *gptmr;
+    uint8_t gptmr_dma_ch_pos;
+    uint8_t gptmr_dma_ch_neg;
+    uint8_t channel_ref;
+    ioTag_t cap_pin;
+    uint32_t dma_req_cmp_index;
+#endif
     uint8_t output;
     uint8_t alternateFunction;
-
+#ifdef HPMicro
+    uint8_t palternateFunction;
+    uint32_t cmp_index;
+#endif
 #if defined(USE_TIMER_DMA)
-#if defined(USE_DMA_SPEC)
     dmaResource_t *dmaRefConfigured;
     uint32_t dmaChannelConfigured;
-#else // USE_DMA_SPEC
     dmaResource_t *dmaRef;
     uint32_t dmaChannel; // XXX Can be much smaller (e.g. uint8_t)
-#endif // USE_DMA_SPEC
-    dmaResource_t *dmaTimUPRef;
+    dmaResource_t *dmaCap;
     uint32_t dmaTimUPChannel;
     uint8_t dmaTimUPIrqHandler;
+#endif
+#ifdef HPMicro
+    gptmr_input_cap_source_t in_cap_trgm_map;
+    pwm_dshot_trgm_source_t pwm_trgm;
+    DMA_Type *dma_neg;
+    DMA_Type *dma_pos;
+    uint32_t irqn;
+    TRGM_Type *trgm3;
+    uint32_t gptmr_io_function;
+    uint32_t trgm_src3;
+    uint32_t trgm_output3;
 #endif
 } timerHardware_t;
 
@@ -199,7 +221,7 @@ TIM_HandleTypeDef* timerFindTimerHandle(TIM_TypeDef *tim);
 HAL_StatusTypeDef TIM_DMACmd(TIM_HandleTypeDef *htim, uint32_t Channel, FunctionalState NewState);
 HAL_StatusTypeDef DMA_SetCurrDataCounter(TIM_HandleTypeDef *htim, uint32_t Channel, uint32_t *pData, uint16_t Length);
 uint16_t timerDmaIndex(uint8_t channel);
-#else
+#elif !defined(HPMicro)
 void timerOCInit(TIM_TypeDef *tim, uint8_t channel, TIM_OCInitTypeDef *init);
 void timerOCPreloadConfig(TIM_TypeDef *tim, uint8_t channel, uint16_t preload);
 #endif

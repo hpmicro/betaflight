@@ -25,14 +25,19 @@
 #include "drivers/dshot.h"
 #include "drivers/motor.h"
 
+#ifdef HPMicro
+#define MOTOR_DSHOT1200_HZ    MHZ_TO_HZ(24)
+#endif
 // Timer clock frequency for the dshot speeds
 #define MOTOR_DSHOT600_HZ     MHZ_TO_HZ(12)
 #define MOTOR_DSHOT300_HZ     MHZ_TO_HZ(6)
 #define MOTOR_DSHOT150_HZ     MHZ_TO_HZ(3)
 
 // These three constants are times in timer clock ticks, e.g. with a 6 MHz clock 20 ticks for bitlength = 300kHz bit rate
-#define MOTOR_BIT_0           7
-#define MOTOR_BIT_1           14
+#ifdef HPM6750
+#define MOTOR_BIT_0           ((450 * dshot_duty_count / 1667) << 4)
+#define MOTOR_BIT_1           ((1150 * dshot_duty_count / 1667) << 4)
+#endif
 #define MOTOR_BITLENGTH       20
 
 #define MOTOR_PROSHOT1000_HZ         MHZ_TO_HZ(24)
@@ -56,8 +61,11 @@ motorDevice_t *dshotPwmDevInit(const struct motorDevConfig_s *motorConfig, uint1
 /* Motor DMA related, moved from pwm_output.h */
 
 #define MAX_DMA_TIMERS        8
-
+#ifdef HPMicro
+#define DSHOT_DMA_BUFFER_SIZE   22 /* resolution + frame reset (2us) */
+#else
 #define DSHOT_DMA_BUFFER_SIZE   18 /* resolution + frame reset (2us) */
+#endif
 #define PROSHOT_DMA_BUFFER_SIZE 6  /* resolution + frame reset (2us) */
 
 #define GCR_TELEMETRY_INPUT_LEN MAX_GCR_EDGES
@@ -70,11 +78,13 @@ motorDevice_t *dshotPwmDevInit(const struct motorDevConfig_s *motorConfig, uint1
 #define DSHOT_DMA_BUFFER_ATTRIBUTE DMA_RAM_W
 #elif defined(STM32F7)
 #define DSHOT_DMA_BUFFER_ATTRIBUTE FAST_DATA_ZERO_INIT
+#elif defined(HPMicro)
+#define DSHOT_DMA_BUFFER_ATTRIBUTE __attribute__((section(".ahb_sram")))  __attribute__((aligned(8)))
 #else
 #define DSHOT_DMA_BUFFER_ATTRIBUTE // None
 #endif
 
-#if defined(STM32F4) || defined(STM32F7) || defined(STM32H7) || defined(STM32G4) || defined(AT32F435)
+#if defined(STM32F4) || defined(STM32F7) || defined(STM32H7) || defined(STM32G4) || defined(AT32F435) || defined(HPMicro)
 #define DSHOT_DMA_BUFFER_UNIT uint32_t
 #else
 #define DSHOT_DMA_BUFFER_UNIT uint8_t
@@ -90,6 +100,10 @@ STATIC_ASSERT(GCR_TELEMETRY_INPUT_LEN >= DSHOT_DMA_BUFFER_SIZE, dshotBufferSizeC
 extern DSHOT_DMA_BUFFER_UNIT dshotDmaBuffer[MAX_SUPPORTED_MOTORS][DSHOT_DMA_BUFFER_ALLOC_SIZE];
 extern DSHOT_DMA_BUFFER_UNIT dshotDmaInputBuffer[MAX_SUPPORTED_MOTORS][DSHOT_DMA_BUFFER_ALLOC_SIZE];
 
+#ifdef HPMicro
+extern DSHOT_DMA_BUFFER_UNIT dshot_telemetry_pos_buf[MAX_SUPPORTED_MOTORS][DSHOT_DMA_BUFFER_ALLOC_SIZE];
+extern DSHOT_DMA_BUFFER_UNIT dshot_telemetry_neg_buf[MAX_SUPPORTED_MOTORS][DSHOT_DMA_BUFFER_ALLOC_SIZE];
+#endif
 #ifdef USE_DSHOT_DMAR
 extern DSHOT_DMA_BUFFER_UNIT dshotBurstDmaBuffer[MAX_DMA_TIMERS][DSHOT_DMA_BUFFER_SIZE * 4];
 #endif
@@ -109,6 +123,11 @@ typedef struct {
 #endif
 #endif
     uint16_t timerDmaSources;
+#ifdef HPMicro
+    dmaResource_t *dmaRef;
+    uint32_t dma_ch;
+    bool inited;
+#endif
 } motorDmaTimer_t;
 
 typedef struct motorDmaOutput_s {
@@ -143,7 +162,7 @@ typedef struct motorDmaOutput_s {
 #ifdef USE_HAL_DRIVER
     LL_TIM_OC_InitTypeDef ocInitStruct;
     LL_TIM_IC_InitTypeDef icInitStruct;
-#else
+#elif !defined(HPMicro)
     TIM_OCInitTypeDef ocInitStruct;
     TIM_ICInitTypeDef icInitStruct;
 #endif
@@ -151,15 +170,25 @@ typedef struct motorDmaOutput_s {
 #endif // USE_DSHOT_TELEMETRY
 
     dmaResource_t *dmaRef;
+#ifdef HPMicro
+    dmaResource_t *dmaRefCap;
+#endif
 #endif // USE_DSHOT
 
     motorDmaTimer_t *timer;
     DSHOT_DMA_BUFFER_UNIT *dmaBuffer;
+#ifdef HPMicro
+    DSHOT_DMA_BUFFER_UNIT *dmaBuffer_pos_edge;
+    DSHOT_DMA_BUFFER_UNIT *dmaBuffer_neg_edge;
+#endif
 } motorDmaOutput_t;
 
 motorDmaOutput_t *getMotorDmaOutput(uint8_t index);
 
 void pwmWriteDshotInt(uint8_t index, uint16_t value);
+#ifdef HPMicro
+void pwmDshotStartTransfer(motorDmaOutput_t *motor, uint32_t size);
+#endif
 bool pwmDshotMotorHardwareConfig(const timerHardware_t *timerHardware, uint8_t motorIndex, uint8_t reorderedMotorIndex, motorPwmProtocolTypes_e pwmProtocolType, uint8_t output);
 #ifdef USE_DSHOT_TELEMETRY
 bool pwmTelemetryDecode(void);

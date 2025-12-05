@@ -270,7 +270,12 @@ extiCallbackRec_t bmi160IntCallbackRec;
 busStatus_e bmi160Intcallback(uint32_t arg)
 {
     gyroDev_t *gyro = (gyroDev_t *)arg;
-    int32_t gyroDmaDuration = cmpTimeCycles(getCycleCounter(), gyro->gyroLastEXTI);
+#if defined(HPMicro)
+    int64_t
+#else
+    int32_t
+#endif
+    gyroDmaDuration = cmpTimeCycles(getCycleCounter(), gyro->gyroLastEXTI);
 
     if (gyroDmaDuration > gyro->gyroDmaMaxDuration) {
         gyro->gyroDmaMaxDuration = gyroDmaDuration;
@@ -288,7 +293,12 @@ void bmi160ExtiHandler(extiCallbackRec_t *cb)
 
     // Ideally we'd use a timer to capture such information, but unfortunately the port used for EXTI interrupt does
     // not have an associated timer
-    uint32_t nowCycles = getCycleCounter();
+#if defined(HPMicro)
+    uint64_t
+#else
+    uint32_t
+#endif
+    nowCycles = getCycleCounter();
     gyro->gyroSyncEXTI = gyro->gyroLastEXTI + gyro->gyroDmaMaxDuration;
     gyro->gyroLastEXTI = nowCycles;
 

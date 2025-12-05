@@ -35,7 +35,7 @@ typedef enum {
     PWM_TYPE_DSHOT150,
     PWM_TYPE_DSHOT300,
     PWM_TYPE_DSHOT600,
-//    PWM_TYPE_DSHOT1200, removed
+    PWM_TYPE_DSHOT1200,
     PWM_TYPE_PROSHOT1000,
     PWM_TYPE_DISABLED,
     PWM_TYPE_MAX
@@ -70,12 +70,12 @@ typedef struct motorDevice_s {
     timeMs_t      motorEnableTimeMs;
 } motorDevice_t;
 
-void motorPostInitNull();
+void motorPostInitNull(void);
 void motorWriteNull(uint8_t index, float value);
 bool motorDecodeTelemetryNull(void);
 void motorUpdateCompleteNull(void);
 
-void motorPostInit();
+void motorPostInit(void);
 void motorWriteAll(float *values);
 
 void motorInitEndpoints(const motorConfig_t *motorConfig, float outputLimit, float *outputLow, float *outputHigh, float *disarm, float *deadbandMotor3DHigh, float *deadbandMotor3DLow);

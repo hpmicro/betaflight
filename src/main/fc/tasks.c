@@ -131,7 +131,7 @@ static void taskMain(timeUs_t currentTimeUs)
 static void taskHandleSerial(timeUs_t currentTimeUs)
 {
     UNUSED(currentTimeUs);
-
+    schedulerIgnoreTaskStateTime();
 #if defined(USE_VCP)
     DEBUG_SET(DEBUG_USB, 0, usbCableIsInserted());
     DEBUG_SET(DEBUG_USB, 1, usbVcpIsConnected());

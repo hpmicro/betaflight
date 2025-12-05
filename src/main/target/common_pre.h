@@ -253,7 +253,7 @@
 #endif
 
 #if !defined(USE_LED_STRIP)
-#define USE_LED_STRIP
+//#define USE_LED_STRIP
 #endif
 
 #define USE_SERIAL_4WAY_SK_BOOTLOADER

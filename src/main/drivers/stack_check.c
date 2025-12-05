@@ -32,8 +32,8 @@
 
 #define STACK_FILL_CHAR 0xa5
 
-extern char _estack; // end of stack, declared in .LD file
-extern char _Min_Stack_Size; // declared in .LD file
+extern char _estack[]; // end of stack, declared in .LD file
+extern char _Min_Stack_Size[]; // declared in .LD file
 
 /*
  * The ARM processor uses a full descending stack. This means the stack pointer holds the address
@@ -79,11 +79,17 @@ void taskStackCheck(timeUs_t currentTimeUs)
     }
 
     usedStackSize = (uint32_t)stackHighMem - (uint32_t)p;
-
+#ifdef HPMicro
+    DEBUG_SET(DEBUG_STACK, 0, (uint32_t)stackHighMem >> 8);
+    DEBUG_SET(DEBUG_STACK, 1, (uint32_t)stackLowMem >> 8);
+    DEBUG_SET(DEBUG_STACK, 2, (uint32_t)stackCurrent >> 8);
+    DEBUG_SET(DEBUG_STACK, 3, (uint32_t)p >> 8);
+#else
     DEBUG_SET(DEBUG_STACK, 0, (uint32_t)stackHighMem & 0xffff);
     DEBUG_SET(DEBUG_STACK, 1, (uint32_t)stackLowMem & 0xffff);
     DEBUG_SET(DEBUG_STACK, 2, (uint32_t)stackCurrent & 0xffff);
     DEBUG_SET(DEBUG_STACK, 3, (uint32_t)p & 0xffff);
+#endif
 }
 
 uint32_t stackUsedSize(void)

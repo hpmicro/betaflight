@@ -36,12 +36,15 @@
 #include "drivers/io.h"
 #include "drivers/motor.h"
 #include "drivers/rcc.h"
+
+#ifndef HPMicro
 #include "nvic.h"
+#endif
 #include "pg/bus_spi.h"
 
 #define NUM_QUEUE_SEGS 5
 
-#if !defined(STM32G4) && !defined(STM32H7) && !defined(AT32F435)
+#if !defined(STM32G4) && !defined(STM32H7) && !defined(AT32F435) && !defined(HPMicro)
 #define USE_TX_IRQ_HANDLER
 #endif
 
@@ -255,10 +258,12 @@ void spiWrite(const extDevice_t *dev, uint8_t data)
     spiWait(dev);
 }
 
+#include "hpm_spi.h"
 // Write data to a register
 void spiWriteReg(const extDevice_t *dev, uint8_t reg, uint8_t data)
 {
     // This routine blocks so no need to use static data
+#ifndef HPMicro
     busSegment_t segments[] = {
             {.u.buffers = {&reg, NULL}, sizeof(reg), false, NULL},
             {.u.buffers = {&data, NULL}, sizeof(data), true, NULL},
@@ -268,6 +273,16 @@ void spiWriteReg(const extDevice_t *dev, uint8_t reg, uint8_t data)
     spiSequence(dev, &segments[0]);
 
     spiWait(dev);
+#else
+    uint8_t tmp[2] = {reg, data};
+    busDevice_t *bus = dev->bus;
+    SPI_TypeDef *instance = bus->busType_u.spi.instance;
+    IOLo(dev->busType_u.spi.csnPin);
+        if (hpm_spi_transmit_blocking(instance, (uint8_t *)&tmp, 2, 0xFFFFFFFF) != status_success) {
+            while (1);
+        }
+    IOHi(dev->busType_u.spi.csnPin);
+#endif
 }
 
 // Write data to a register, returning false if the bus is busy
@@ -335,6 +350,20 @@ void spiWriteRegBuf(const extDevice_t *dev, uint8_t reg, uint8_t *data, uint32_t
 // Wait for bus to become free, then read a byte from a register
 uint8_t spiReadReg(const extDevice_t *dev, uint8_t reg)
 {
+#ifdef HPMicro
+    uint8_t data[2] = { 0 };
+    uint8_t regs[2] = { reg };
+    IOLo(dev->busType_u.spi.csnPin);
+    busDevice_t *bus = dev->bus;
+    SPI_TypeDef *instance = bus->busType_u.spi.instance;
+    
+    if (hpm_spi_transmit_receive_blocking(instance, (uint8_t *)&regs, (uint8_t *)&data[0], 2, 0xFFFFFFFF) != status_success) {
+        printf("hpm_spi_transmit_receive_blocking fail\n");
+        while (1);
+    }
+    IOHi(dev->busType_u.spi.csnPin);
+    return data[1];
+#else
     uint8_t data;
     // This routine blocks so no need to use static data
     busSegment_t segments[] = {
@@ -348,6 +377,7 @@ uint8_t spiReadReg(const extDevice_t *dev, uint8_t reg)
     spiWait(dev);
 
     return data;
+#endif
 }
 
 // Wait for bus to become free, then read a byte of data where the register is ORed with 0x80
@@ -355,8 +385,11 @@ uint8_t spiReadRegMsk(const extDevice_t *dev, uint8_t reg)
 {
     return spiReadReg(dev, reg | 0x80);
 }
-
+#ifdef HPMicro
+uint32_t spiCalculateDivider(uint32_t freq)
+#else
 uint16_t spiCalculateDivider(uint32_t freq)
+#endif
 {
 #if defined(STM32F4) || defined(STM32F7)
     uint32_t spiClk = SystemCoreClock / 2;
@@ -370,11 +403,18 @@ uint16_t spiCalculateDivider(uint32_t freq)
     }
 
     uint32_t spiClk = system_core_clock / 2;
+#elif defined(HPMicro)
+    uint32_t spiClk = 24000000;
+    return freq;
 #else
 #error "Base SPI clock not defined for this architecture"
 #endif
 
+#ifdef HPMicro
+    uint32_t divisor = 2;
+#else
     uint16_t divisor = 2;
+#endif
 
     spiClk >>= 1;
 
@@ -396,6 +436,8 @@ uint32_t spiCalculateClock(uint16_t spiClkDivisor)
         return 36000000;
     }
 
+#elif defined(HPMicro)
+    uint32_t spiClk = 100000000;
 #else
 #error "Base SPI clock not defined for this architecture"
 #endif
@@ -428,6 +470,15 @@ FAST_IRQ_HANDLER static void spiIrqHandler(const extDevice_t *dev)
             break;
 
         case BUS_READY:
+#ifdef HPMicro
+            if (l1c_dc_is_enabled()) {
+                /* cache writeback for sent buff */
+                uint32_t aligned_start = HPM_L1C_CACHELINE_ALIGN_DOWN((uint32_t)bus->curSegment->u.buffers.rxData);
+                uint32_t aligned_end = HPM_L1C_CACHELINE_ALIGN_UP((uint32_t)bus->curSegment->u.buffers.rxData + bus->curSegment->len);
+                uint32_t aligned_size = aligned_end - aligned_start;
+                l1c_dc_invalidate(aligned_start, aligned_size);
+            }
+#endif
         default:
             // Advance to the next DMA segment
             break;
@@ -485,6 +536,14 @@ FAST_IRQ_HANDLER static void spiRxIrqHandler(dmaChannelDescriptor_t* descriptor)
     if (!dev) {
         return;
     }
+#ifdef HPMicro
+    uint32_t ch = (uint32_t)(dev->bus->dmaRx->ref) & 0xF;
+    if (descriptor->int_stat & (1 << (DMA_STATUS_TC_SHIFT + ch))) {
+
+    } else {
+        return;
+    }
+#endif
 
     busDevice_t *bus = dev->bus;
 
@@ -623,6 +682,11 @@ void spiInitBusDMA(void)
                 bus->dmaTx->stream = DMA_DEVICE_INDEX(dmaTxIdentifier);
                 bus->dmaTx->channel = dmaTxChannelSpec->channel;
 #endif
+#ifdef HPMSOC_HAS_HPMSDK_DMA
+                DMA_Type *dma = dmaTxIdentifier > DMA1_CH8_HANDLER ? HPM_XDMA : HPM_HDMA;
+                uint32_t mux_src = dmaGetMuxSrcSpecByPeripheral(DMA_PERIPH_SPI_SDO, device);
+                dmamux_config(HPM_DMAMUX, DMA_SOC_CHN_TO_DMAMUX_CHN(dma, dmaTxChannelSpec->channel), mux_src, true);
+#endif
 
                 dmaEnable(dmaTxIdentifier);
 #if defined(USE_ATBSP_DRIVER)
@@ -661,6 +725,11 @@ void spiInitBusDMA(void)
                 bus->dmaRx->stream = DMA_DEVICE_INDEX(dmaRxIdentifier);
                 bus->dmaRx->channel = dmaRxChannelSpec->channel;
 #endif
+#ifdef HPMSOC_HAS_HPMSDK_DMA
+                DMA_Type *dma = dmaRxIdentifier > DMA1_CH8_HANDLER ? HPM_XDMA : HPM_HDMA;
+                uint32_t mux_src = dmaGetMuxSrcSpecByPeripheral(DMA_PERIPH_SPI_SDI, device);
+                dmamux_config(HPM_DMAMUX, DMA_SOC_CHN_TO_DMAMUX_CHN(dma, dmaRxChannelSpec->channel), mux_src, true);
+#endif
 
                 dmaEnable(dmaRxIdentifier);
 #if defined(USE_ATBSP_DRIVER)
@@ -680,8 +749,11 @@ void spiInitBusDMA(void)
             /* Note that this driver may be called both from the normal thread of execution, or from USB interrupt
              * handlers, so the DMA completion interrupt must be at a higher priority
              */
+#ifdef HPMicro
+            dmaSetHandler(dmaRxIdentifier, spiRxIrqHandler, 0, 0);
+#else
             dmaSetHandler(dmaRxIdentifier, spiRxIrqHandler, NVIC_PRIO_SPI_DMA, 0);
-
+#endif
             bus->useDMA = true;
 #ifdef USE_TX_IRQ_HANDLER
         } else if (dmaTxIdentifier) {
@@ -694,8 +766,9 @@ void spiInitBusDMA(void)
 
             spiInternalResetDescriptors(bus);
 
+#ifndef HPMicro
             dmaSetHandler(dmaTxIdentifier, spiTxIrqHandler, NVIC_PRIO_SPI_DMA, 0);
-
+#endif
             bus->useDMA = true;
 #endif
         } else {
@@ -706,7 +779,11 @@ void spiInitBusDMA(void)
     }
 }
 
+#ifdef HPMicro
+void spiSetClkDivisor(const extDevice_t *dev, uint32_t divisor)
+#else
 void spiSetClkDivisor(const extDevice_t *dev, uint16_t divisor)
+#endif
 {
     ((extDevice_t *)dev)->busType_u.spi.speed = divisor;
 }

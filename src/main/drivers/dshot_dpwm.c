@@ -39,6 +39,8 @@
 // XXX TODO: Share a single region among dshotDmaBuffer and dshotBurstDmaBuffer
 
 DSHOT_DMA_BUFFER_ATTRIBUTE DSHOT_DMA_BUFFER_UNIT dshotDmaBuffer[MAX_SUPPORTED_MOTORS][DSHOT_DMA_BUFFER_ALLOC_SIZE];
+DSHOT_DMA_BUFFER_ATTRIBUTE DSHOT_DMA_BUFFER_UNIT dshot_telemetry_pos_buf[MAX_SUPPORTED_MOTORS][DSHOT_DMA_BUFFER_ALLOC_SIZE];
+DSHOT_DMA_BUFFER_ATTRIBUTE DSHOT_DMA_BUFFER_UNIT dshot_telemetry_neg_buf[MAX_SUPPORTED_MOTORS][DSHOT_DMA_BUFFER_ALLOC_SIZE];
 
 #ifdef USE_DSHOT_DMAR
 DSHOT_DMA_BUFFER_ATTRIBUTE DSHOT_DMA_BUFFER_UNIT dshotBurstDmaBuffer[MAX_DMA_TIMERS][DSHOT_DMA_BUFFER_SIZE * 4];
@@ -52,16 +54,24 @@ FAST_DATA_ZERO_INIT bool useDshotTelemetry = false;
 #endif
 
 FAST_DATA_ZERO_INIT loadDmaBufferFn *loadDmaBuffer;
-
+extern uint32_t dshot_duty_count;
 FAST_CODE_NOINLINE uint8_t loadDmaBufferDshot(uint32_t *dmaBuffer, int stride, uint16_t packet)
 {
     int i;
-    for (i = 0; i < 16; i++) {
+#if defined(HPMSOC_HAS_HPMSDK_PWM)
+    dmaBuffer[0] = dshot_duty_count << 4;
+    dmaBuffer[1] = dshot_duty_count << 4;
+    dmaBuffer[2] = dshot_duty_count << 4;
+    dmaBuffer[3] = dshot_duty_count << 4;
+#endif
+    for (i = 4; i < 20; i++) {
         dmaBuffer[i * stride] = (packet & 0x8000) ? MOTOR_BIT_1 : MOTOR_BIT_0;  // MSB first
         packet <<= 1;
     }
-    dmaBuffer[i++ * stride] = 0;
-    dmaBuffer[i++ * stride] = 0;
+#if defined(HPMSOC_HAS_HPMSDK_PWM)
+    dmaBuffer[i++ * stride] = dshot_duty_count << 4;
+    dmaBuffer[i++ * stride] = dshot_duty_count << 4;
+#endif
 
     return DSHOT_DMA_BUFFER_SIZE;
 }
@@ -84,6 +94,8 @@ uint32_t getDshotHz(motorPwmProtocolTypes_e pwmProtocolType)
     switch (pwmProtocolType) {
     case(PWM_TYPE_PROSHOT1000):
         return MOTOR_PROSHOT1000_HZ;
+    case(PWM_TYPE_DSHOT1200):
+        return MOTOR_DSHOT1200_HZ;
     case(PWM_TYPE_DSHOT600):
         return MOTOR_DSHOT600_HZ;
     case(PWM_TYPE_DSHOT300):
@@ -113,7 +125,11 @@ static bool dshotPwmEnableMotors(void)
     for (int i = 0; i < dshotPwmDevice.count; i++) {
         motorDmaOutput_t *motor = getMotorDmaOutput(i);
         const IO_t motorIO = IOGetByTag(motor->timerHardware->tag);
+#ifdef HPMicro
+        IOConfigGPIOAF(motorIO, motor->iocfg, motor->timerHardware->alternateFunction, motor->timerHardware->palternateFunction);
+#else
         IOConfigGPIOAF(motorIO, motor->iocfg, motor->timerHardware->alternateFunction);
+#endif
     }
 
     // No special processing required
@@ -167,6 +183,7 @@ motorDevice_t *dshotPwmDevInit(const motorDevConfig_t *motorConfig, uint16_t idl
     case PWM_TYPE_PROSHOT1000:
         loadDmaBuffer = loadDmaBufferProshot;
         break;
+    case PWM_TYPE_DSHOT1200:
     case PWM_TYPE_DSHOT600:
     case PWM_TYPE_DSHOT300:
     case PWM_TYPE_DSHOT150:

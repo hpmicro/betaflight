@@ -2,7 +2,6 @@
 #include <ctype.h>
 #include <float.h>
 #include <math.h>
-#include <memory.h>
 #include <stdio.h>
 #include "olc_private.h"
 

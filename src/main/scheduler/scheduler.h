@@ -32,19 +32,19 @@
 
 #define LOAD_PERCENTAGE_ONE             100
 
-#define SCHED_TASK_DEFER_MASK           0x07 // Scheduler loop count is masked with this and when 0 long running tasks are processed
+#define SCHED_TASK_DEFER_MASK           0x1F // Scheduler loop count is masked with this and when 0 long running tasks are processed
 
 #define SCHED_START_LOOP_MIN_US         1   // Wait at start of scheduler loop if gyroTask is nearly due
-#define SCHED_START_LOOP_MAX_US         12
-#define SCHED_START_LOOP_DOWN_STEP      50  // Fraction of a us to reduce start loop wait
+#define SCHED_START_LOOP_MAX_US         1
+#define SCHED_START_LOOP_DOWN_STEP      (3)  // Fraction of a us to reduce start loop wait
 #define SCHED_START_LOOP_UP_STEP        1   // Fraction of a us to increase start loop wait
 
-#define TASK_GUARD_MARGIN_MIN_US        3   // Add an amount to the estimate of a task duration
-#define TASK_GUARD_MARGIN_MAX_US        6
-#define TASK_GUARD_MARGIN_DOWN_STEP     50  // Fraction of a us to reduce task guard margin
+#define TASK_GUARD_MARGIN_MIN_US        1   // Add an amount to the estimate of a task duration
+#define TASK_GUARD_MARGIN_MAX_US        2
+#define TASK_GUARD_MARGIN_DOWN_STEP     3  // Fraction of a us to reduce task guard margin
 #define TASK_GUARD_MARGIN_UP_STEP       1   // Fraction of a us to increase task guard margin
 
-#define CHECK_GUARD_MARGIN_US           2   // Add a margin to the amount of time allowed for a check function to run
+#define CHECK_GUARD_MARGIN_US           1   // Add a margin to the amount of time allowed for a check function to run
 
 // Some tasks have occasional peaks in execution time so normal moving average duration estimation doesn't work
 // Decay the estimated max task duration by 1/(1 << TASK_EXEC_TIME_SHIFT) on every invocation
@@ -230,10 +230,10 @@ void getTaskInfo(taskId_e taskId, taskInfo_t *taskInfo);
 void rescheduleTask(taskId_e taskId, timeDelta_t newPeriodUs);
 void setTaskEnabled(taskId_e taskId, bool newEnabledState);
 timeDelta_t getTaskDeltaTimeUs(taskId_e taskId);
-void schedulerIgnoreTaskStateTime();
-void schedulerIgnoreTaskExecRate();
-void schedulerIgnoreTaskExecTime();
-bool schedulerGetIgnoreTaskExecTime();
+void schedulerIgnoreTaskStateTime(void);
+void schedulerIgnoreTaskExecRate(void);
+void schedulerIgnoreTaskExecTime(void);
+bool schedulerGetIgnoreTaskExecTime(void);
 void schedulerResetTaskStatistics(taskId_e taskId);
 void schedulerResetTaskMaxExecutionTime(taskId_e taskId);
 void schedulerResetCheckFunctionMaxExecutionTime(void);

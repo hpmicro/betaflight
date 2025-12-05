@@ -46,7 +46,9 @@
 #include "drivers/serial_uart_impl.h"
 
 #include "pg/serial_uart.h"
-
+#ifdef HPMicro
+#include "hpm_uart_drv.h"
+#endif
 #if defined(STM32H7)
 #define UART_TX_BUFFER_ATTRIBUTE DMA_RAM            // D2 SRAM
 #define UART_RX_BUFFER_ATTRIBUTE DMA_RAM            // D2 SRAM
@@ -56,7 +58,7 @@
 #elif defined(STM32F7)
 #define UART_TX_BUFFER_ATTRIBUTE FAST_DATA_ZERO_INIT // DTCM RAM
 #define UART_RX_BUFFER_ATTRIBUTE FAST_DATA_ZERO_INIT // DTCM RAM
-#elif defined(STM32F4) || defined(AT32F4)
+#elif defined(STM32F4) || defined(AT32F4) || defined(HPMicro)
 #define UART_TX_BUFFER_ATTRIBUTE                    // NONE
 #define UART_RX_BUFFER_ATTRIBUTE                    // NONE
 #else
@@ -166,6 +168,8 @@ static uint32_t uartTotalRxBytesWaiting(const serialPort_t *instance)
         // XXX Could be consolidated
 #ifdef USE_HAL_DRIVER
         uint32_t rxDMAHead = __HAL_DMA_GET_COUNTER(uartPort->Handle.hdmarx);
+#elif defined(HPMicro)
+        uint32_t rxDMAHead = 0;
 #else
         uint32_t rxDMAHead = xDMA_GetCurrDataCounter(uartPort->rxDMAResource);
 #endif
@@ -189,6 +193,7 @@ static uint32_t uartTotalRxBytesWaiting(const serialPort_t *instance)
 
 static uint32_t uartTotalTxBytesFree(const serialPort_t *instance)
 {
+    (void)instance;
     const uartPort_t *uartPort = (const uartPort_t*)instance;
 
     uint32_t bytesUsed;
@@ -198,7 +203,7 @@ static uint32_t uartTotalTxBytesFree(const serialPort_t *instance)
     } else {
         bytesUsed = uartPort->port.txBufferSize + uartPort->port.txBufferHead - uartPort->port.txBufferTail;
     }
-
+#ifndef HPMicro
 #ifdef USE_DMA
     if (uartPort->txDMAResource) {
         /*
@@ -210,7 +215,7 @@ static uint32_t uartTotalTxBytesFree(const serialPort_t *instance)
 #else
         bytesUsed += xDMA_GetCurrDataCounter(uartPort->txDMAResource);
 #endif
-
+#endif
         /*
          * If the Tx buffer is being written to very quickly, we might have advanced the head into the buffer
          * space occupied by the current DMA transfer. In that case the "bytesUsed" total will actually end up larger
@@ -293,6 +298,8 @@ static void uartWrite(serialPort_t *instance, uint8_t ch)
         __HAL_UART_ENABLE_IT(&uartPort->Handle, UART_IT_TXE);
 #elif defined(USE_ATBSP_DRIVER)
         usart_interrupt_enable(uartPort->USARTx, USART_TDBE_INT, TRUE);
+#elif defined(HPMicro)
+
 #else
         USART_ITConfig(uartPort->USARTx, USART_IT_TXE, ENABLE);
 #endif
@@ -358,6 +365,25 @@ static void uartEndWrite(serialPort_t *instance)
         __HAL_UART_ENABLE_IT(&uartPort->Handle, UART_IT_TXE);
 #elif defined(USE_ATBSP_DRIVER)
         usart_interrupt_enable(uartPort->USARTx, USART_TDBE_INT, TRUE);
+#elif defined(HPMicro)
+        uint8_t irq_id = uart_get_enabled_irq(uartPort->USARTx);
+        if (irq_id & uart_intr_id_tx_slot_avail) {
+        } else {
+            if (uartPort->port.options & SERIAL_BIDIR) {
+                if (uart->tx.pin) {
+                    const uartHardware_t *hardware = uart->hardware;
+                    HPM_IOC->PAD[IO_IOC_INDEX(IOGetByTag(uart->tx.pin))].FUNC_CTL = hardware->af;
+                }
+                if (uart->rx.pin) {
+                    HPM_IOC->PAD[IO_IOC_INDEX(IOGetByTag(uart->rx.pin))].FUNC_CTL = 0;
+                }
+            }
+            uart_write_byte(uartPort->USARTx, uartPort->port.txBuffer[uartPort->port.txBufferTail]);
+            uartPort->port.txBufferTail = (uartPort->port.txBufferTail + 1) % uartPort->port.txBufferSize;
+            
+            uart_enable_irq(uartPort->USARTx, uart_intr_tx_slot_avail);
+            
+        }
 #else
         USART_ITConfig(uartPort->USARTx, USART_IT_TXE, ENABLE);
 #endif
@@ -435,7 +461,7 @@ void uartConfigureDma(uartDevice_t *uartdev)
 #endif
     }
 #endif
-
+#ifndef HPMicro
     if (uartPort->txDMAResource) {
         dmaIdentifier_e identifier = dmaGetIdentifier(uartPort->txDMAResource);
         if (dmaAllocate(identifier, OWNER_SERIAL_TX, RESOURCE_INDEX(hardware->device))) {
@@ -458,6 +484,7 @@ void uartConfigureDma(uartDevice_t *uartdev)
             uartPort->rxDMAPeripheralBaseAddr = (uint32_t)&UART_REG_RXD(hardware->reg);
         }
     }
+#endif
 }
 #endif
 
@@ -485,7 +512,7 @@ UART_IRQHandler(UART, 4, UARTDEV_4)  // UART4 Rx/Tx IRQ Handler
 #endif
 
 #ifdef USE_UART5
-UART_IRQHandler(UART, 5, UARTDEV_5)  // UART5 Rx/Tx IRQ Handler
+UART_IRQHandler(UART, 5, UARTDEV_2)  // UART5 Rx/Tx IRQ Handler
 #endif
 
 #ifdef USE_UART6
@@ -493,7 +520,7 @@ UART_IRQHandler(USART, 6, UARTDEV_6) // USART6 Rx/Tx IRQ Handler
 #endif
 
 #ifdef USE_UART7
-UART_IRQHandler(UART, 7, UARTDEV_7)  // UART7 Rx/Tx IRQ Handler
+UART_IRQHandler(UART, 7, UARTDEV_3)  // UART7 Rx/Tx IRQ Handler
 #endif
 
 #ifdef USE_UART8

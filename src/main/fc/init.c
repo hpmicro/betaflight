@@ -23,6 +23,7 @@
 #include <string.h>
 #include <math.h>
 
+#include "usb_config.h"
 #include "platform.h"
 
 #include "blackbox/blackbox.h"
@@ -171,6 +172,9 @@
 #include "sensors/initialisation.h"
 
 #include "telemetry/telemetry.h"
+#ifdef HPMicro
+#include "board.h"
+#endif
 
 #ifdef USE_HARDWARE_REVISION_DETECTION
 #include "hardware_revision.h"
@@ -261,7 +265,9 @@ void init(void)
 #ifdef SERIAL_PORT_COUNT
     printfSerialInit();
 #endif
-
+#ifdef HPMicro
+    board_init();
+#endif
     systemInit();
 
     // Initialize task data as soon as possible. Has to be done before tasksInit(),
@@ -332,7 +338,14 @@ void init(void)
             failureMode(FAILURE_SDCARD_INITIALISATION_FAILED);
         }
     }
-
+        afatfs_poll();
+        afatfs_poll();
+        afatfs_poll();
+        afatfs_poll();
+        afatfs_poll();
+        afatfs_poll();
+        afatfs_poll();
+        afatfs_poll();
 #endif // CONFIG_IN_SDCARD
 
 #if defined(CONFIG_IN_EXTERNAL_FLASH) || defined(CONFIG_IN_MEMORY_MAPPED_FLASH)
@@ -590,7 +603,6 @@ void init(void)
     sdioPinConfigure();
     SDIO_GPIO_Init();
 #endif
-
 #ifdef USE_USB_MSC
 /* MSC mode will start after init, but will not allow scheduler to run,
  *  so there is no bottleneck in reading and writing data */
@@ -602,7 +614,9 @@ void init(void)
         if (blackboxConfig()->device == BLACKBOX_DEVICE_SDCARD) {
             if (sdcardConfig()->mode) {
                 if (!(initFlags & SD_INIT_ATTEMPTED)) {
+#ifndef HPMicro
                     sdCardAndFSInit();
+#endif
                     initFlags |= SD_INIT_ATTEMPTED;
                 }
             }
@@ -614,7 +628,7 @@ void init(void)
         // it to identify the log files *before* starting the USB device to
         // prevent timeouts of the mass storage device.
         if (blackboxConfig()->device == BLACKBOX_DEVICE_FLASH) {
-            emfat_init_files();
+            //emfat_init_files();
         }
 #endif
         // There's no more initialisation to be done, so enable DMA where possible for SPI
@@ -798,7 +812,7 @@ void init(void)
 
 #ifdef USE_FLASH_CHIP
     if (!(initFlags & FLASH_INIT_ATTEMPTED)) {
-        flashInit(flashConfig());
+        //flashInit(flashConfig());
         initFlags |= FLASH_INIT_ATTEMPTED;
     }
 #endif
@@ -1001,7 +1015,7 @@ void init(void)
 
     debugInit();
 
-    unusedPinsInit();
+    //unusedPinsInit();
 
     tasksInit();
 

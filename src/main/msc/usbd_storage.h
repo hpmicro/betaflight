@@ -21,7 +21,7 @@
  */
 
 #pragma once
-
+#ifndef HPMicro
 #ifdef USE_HAL_DRIVER
 #include "usbd_msc.h"
 #else
@@ -54,5 +54,6 @@ extern USBD_STORAGE_cb_TypeDef USBD_MSC_MICRO_SD_SPI_fops;
 #endif
 #ifdef USE_FLASHFS
 extern USBD_STORAGE_cb_TypeDef USBD_MSC_EMFAT_fops;
+#endif
 #endif
 #endif // USE_HAL_DRIVER

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025-2026 HPMicro
+ * Copyright (c) 2026 HPMicro
  * SPDX-License-Identifier: BSD-3-Clause
  *
  */
@@ -50,7 +50,7 @@ typedef enum
 #define DEF_TIM_CH__CH_CH8N D(8, 1)
 #define DEF_TIM_CH__CH_CH9N D(9, 1)
 #define USED_TIMERS  ( BIT(1) | BIT(2) )
-#define HARDWARE_TIMER_DEFINITION_COUNT    4
+#define HARDWARE_TIMER_DEFINITION_COUNT    2
 
 #define TIMER_GET_IO_TAG(pin) DEFIO_TAG(pin)
 

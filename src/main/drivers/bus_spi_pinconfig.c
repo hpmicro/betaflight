@@ -486,6 +486,87 @@ const spiHardware_t spiHardware[] = {
         .rcc = clock_spi2,
     },
 #endif
+#ifdef HPM6360
+    {
+        .device = SPIDEV_1,
+        .reg = SPI1,
+        .sckPins = {
+            { DEFIO_TAG_E(PA8), IOC_PA08_FUNC_CTL_SPI0_SCLK | IOC_PAD_FUNC_CTL_LOOP_BACK_SET(1), -1, IOC_PAD_PAD_CTL_DS_SET(6) | IOC_PAD_PAD_CTL_PE_SET(1), -1},
+            { DEFIO_TAG_E(PA12), IOC_PA12_FUNC_CTL_SPI0_SCLK | IOC_PAD_FUNC_CTL_LOOP_BACK_SET(1), -1, IOC_PAD_PAD_CTL_DS_SET(6) | IOC_PAD_PAD_CTL_PE_SET(1), -1},
+            { DEFIO_TAG_E(PA30), IOC_PA30_FUNC_CTL_SPI0_SCLK | IOC_PAD_FUNC_CTL_LOOP_BACK_SET(1), -1, IOC_PAD_PAD_CTL_DS_SET(6) | IOC_PAD_PAD_CTL_PE_SET(1), -1},
+        },
+        .misoPins = {
+            { DEFIO_TAG_E(PA7), IOC_PA07_FUNC_CTL_SPI0_MISO, -1, IOC_PAD_PAD_CTL_DS_SET(6) | IOC_PAD_PAD_CTL_PE_SET(1), -1},
+            { DEFIO_TAG_E(PA11), IOC_PA11_FUNC_CTL_SPI0_MISO, -1, IOC_PAD_PAD_CTL_DS_SET(6) | IOC_PAD_PAD_CTL_PE_SET(1), -1},
+            { DEFIO_TAG_E(PA29), IOC_PA29_FUNC_CTL_SPI0_MISO, -1, IOC_PAD_PAD_CTL_DS_SET(6) | IOC_PAD_PAD_CTL_PE_SET(1), -1},
+        },
+        .mosiPins = {
+            { DEFIO_TAG_E(PA9), IOC_PA09_FUNC_CTL_SPI0_MOSI, -1, IOC_PAD_PAD_CTL_DS_SET(6) | IOC_PAD_PAD_CTL_PE_SET(1), -1},
+            { DEFIO_TAG_E(PA13), IOC_PA13_FUNC_CTL_SPI0_MOSI, -1, IOC_PAD_PAD_CTL_DS_SET(6) | IOC_PAD_PAD_CTL_PE_SET(1), -1},
+            { DEFIO_TAG_E(PA31), IOC_PA31_FUNC_CTL_SPI0_MOSI, -1, IOC_PAD_PAD_CTL_DS_SET(6) | IOC_PAD_PAD_CTL_PE_SET(1), -1},
+        },
+        .af= 5,
+        .rcc = clock_spi0,
+    },
+    {
+        .device = SPIDEV_2,
+        .reg = SPI2,
+        .sckPins = {
+            { DEFIO_TAG_E(PA18), IOC_PA18_FUNC_CTL_SPI1_SCLK | IOC_PAD_FUNC_CTL_LOOP_BACK_SET(1), -1, IOC_PAD_PAD_CTL_DS_SET(6) | IOC_PAD_PAD_CTL_PE_SET(1), -1},
+            { DEFIO_TAG_E(PB4), IOC_PB04_FUNC_CTL_SPI1_SCLK | IOC_PAD_FUNC_CTL_LOOP_BACK_SET(1), -1, IOC_PAD_PAD_CTL_DS_SET(6) | IOC_PAD_PAD_CTL_PE_SET(1), -1},
+            { DEFIO_TAG_E(PB9), IOC_PB09_FUNC_CTL_SPI1_SCLK | IOC_PAD_FUNC_CTL_LOOP_BACK_SET(1), -1, IOC_PAD_PAD_CTL_DS_SET(6) | IOC_PAD_PAD_CTL_PE_SET(1), -1},
+            { DEFIO_TAG_E(PB29), IOC_PB29_FUNC_CTL_SPI1_SCLK | IOC_PAD_FUNC_CTL_LOOP_BACK_SET(1), -1, IOC_PAD_PAD_CTL_DS_SET(6) | IOC_PAD_PAD_CTL_PE_SET(1), -1},
+        },
+        .misoPins = {
+            { DEFIO_TAG_E(PA17), IOC_PA17_FUNC_CTL_SPI1_MISO, -1, IOC_PAD_PAD_CTL_DS_SET(6) | IOC_PAD_PAD_CTL_PE_SET(1), -1},
+            { DEFIO_TAG_E(PB3), IOC_PB03_FUNC_CTL_SPI1_MISO, -1, IOC_PAD_PAD_CTL_DS_SET(6) | IOC_PAD_PAD_CTL_PE_SET(1), -1},
+            { DEFIO_TAG_E(PB10), IOC_PB10_FUNC_CTL_SPI1_MISO, -1, IOC_PAD_PAD_CTL_DS_SET(6) | IOC_PAD_PAD_CTL_PE_SET(1), -1},
+            { DEFIO_TAG_E(PB28), IOC_PB28_FUNC_CTL_SPI1_MISO, -1, IOC_PAD_PAD_CTL_DS_SET(6) | IOC_PAD_PAD_CTL_PE_SET(1), -1},
+        },
+        .mosiPins = {
+            { DEFIO_TAG_E(PA19), IOC_PA19_FUNC_CTL_SPI1_MOSI, -1, IOC_PAD_PAD_CTL_DS_SET(6) | IOC_PAD_PAD_CTL_PE_SET(1), -1},
+            { DEFIO_TAG_E(PB5), IOC_PB05_FUNC_CTL_SPI1_MOSI, -1, IOC_PAD_PAD_CTL_DS_SET(6) | IOC_PAD_PAD_CTL_PE_SET(1), -1},
+            { DEFIO_TAG_E(PB11), IOC_PB11_FUNC_CTL_SPI1_MOSI, -1, IOC_PAD_PAD_CTL_DS_SET(6) | IOC_PAD_PAD_CTL_PE_SET(1), -1},
+            { DEFIO_TAG_E(PB30), IOC_PB30_FUNC_CTL_SPI1_MOSI, -1, IOC_PAD_PAD_CTL_DS_SET(6) | IOC_PAD_PAD_CTL_PE_SET(1), -1},
+        },
+        .af= 5,
+        .rcc = clock_spi1,
+    },
+    {
+        .device = SPIDEV_3,
+        .reg = SPI3,
+        .sckPins = {
+            { DEFIO_TAG_E(PB15), IOC_PB15_FUNC_CTL_SPI2_SCLK | IOC_PAD_FUNC_CTL_LOOP_BACK_SET(1), -1, IOC_PAD_PAD_CTL_DS_SET(6) | IOC_PAD_PAD_CTL_PE_SET(1), -1},
+        },
+        .misoPins = {
+            { DEFIO_TAG_E(PB14), IOC_PB14_FUNC_CTL_SPI2_MISO, -1, IOC_PAD_PAD_CTL_DS_SET(6) | IOC_PAD_PAD_CTL_PE_SET(1), -1},
+            { DEFIO_TAG_E(PC0), IOC_PC00_FUNC_CTL_SPI2_MISO, -1, IOC_PAD_PAD_CTL_DS_SET(6) | IOC_PAD_PAD_CTL_PE_SET(1), -1},
+        },
+        .mosiPins = {
+            { DEFIO_TAG_E(PB16), IOC_PB16_FUNC_CTL_SPI2_MOSI, -1, IOC_PAD_PAD_CTL_DS_SET(6) | IOC_PAD_PAD_CTL_PE_SET(1), -1},
+        },
+        .af= 5,
+        .rcc = clock_spi2,
+    },
+    {
+        .device = SPIDEV_4,
+        .reg = SPI4,
+        .sckPins = {
+            { DEFIO_TAG_E(PA2), IOC_PA02_FUNC_CTL_SPI3_SCLK | IOC_PAD_FUNC_CTL_LOOP_BACK_SET(1), -1, IOC_PAD_PAD_CTL_DS_SET(6) | IOC_PAD_PAD_CTL_PE_SET(1), -1},
+            { DEFIO_TAG_E(PC20), IOC_PC20_FUNC_CTL_SPI3_SCLK | IOC_PAD_FUNC_CTL_LOOP_BACK_SET(1), -1, IOC_PAD_PAD_CTL_DS_SET(6) | IOC_PAD_PAD_CTL_PE_SET(1), -1},
+        },
+        .misoPins = {
+            { DEFIO_TAG_E(PA1), IOC_PA01_FUNC_CTL_SPI3_MISO, -1, IOC_PAD_PAD_CTL_DS_SET(6) | IOC_PAD_PAD_CTL_PE_SET(1), -1},
+            { DEFIO_TAG_E(PC19), IOC_PC19_FUNC_CTL_SPI3_MISO, -1, IOC_PAD_PAD_CTL_DS_SET(6) | IOC_PAD_PAD_CTL_PE_SET(1), -1},
+        },
+        .mosiPins = {
+            { DEFIO_TAG_E(PA3), IOC_PA03_FUNC_CTL_SPI3_MOSI, -1, IOC_PAD_PAD_CTL_DS_SET(6) | IOC_PAD_PAD_CTL_PE_SET(1), -1},
+            { DEFIO_TAG_E(PC21), IOC_PC21_FUNC_CTL_SPI3_MOSI, -1, IOC_PAD_PAD_CTL_DS_SET(6) | IOC_PAD_PAD_CTL_PE_SET(1), -1},
+        },
+        .af= 5,
+        .rcc = clock_spi3,
+    },
+#endif
 };
 
 void spiPinConfigure(const spiPinConfig_t *pConfig)

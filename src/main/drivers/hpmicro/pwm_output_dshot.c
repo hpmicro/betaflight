@@ -40,7 +40,7 @@
 
 uint32_t dshot_duty_count = 0;
 #ifdef USE_DSHOT_TELEMETRY
-uint32_t dshot_telemetry_count = 0;
+uint32_t dshot_telemetry_bit_width = 0;
 dma_channel_config_t dshot_dma_config[MAX_SUPPORTED_MOTORS] = { 0 };
 dma_channel_config_t dshot_cap_pos_edge_config[MAX_SUPPORTED_MOTORS] = { 0 };
 dma_channel_config_t dshot_cap_neg_edge_config[MAX_SUPPORTED_MOTORS] = { 0 };
@@ -160,7 +160,7 @@ FAST_CODE static void motor_dshot_transfer_done_handler(dmaChannelDescriptor_t *
  * @brief Setup DSHOT TELEMETRY related dma channel.
  *
  */
-FAST_CODE static void setup_dshot_telemetry_dma(motorDmaOutput_t * const motor)
+FAST_CODE static void setup_dshot_telemetry_dma(motorDmaOutput_t * const motor, motorPwmProtocolTypes_e pwmProtocolType)
 {
     const timerHardware_t *timerHardware = motor->timerHardware;
 
@@ -177,7 +177,7 @@ FAST_CODE static void setup_dshot_telemetry_dma(motorDmaOutput_t * const motor)
     uint32_t gptmr_freq = clock_get_frequency(timerHardware->gptmr_clock);
 
     //dshot_reload_counter is used to decode dshot telemetry message
-    dshot_telemetry_count = gptmr_freq;
+    dshot_telemetry_bit_width = gptmr_freq / getDshotHz(pwmProtocolType) * MOTOR_BITLENGTH * 4 / 5;
 
     config.reload = gptmr_freq / 10 - 1;
     config.enable_software_sync = true;
@@ -252,8 +252,13 @@ bool pwmDshotMotorHardwareConfig(const timerHardware_t *timerHardware, uint8_t m
         return false;
     }
 
-    dmaResource_t *dmaRefCap = timerHardware->dmaCap;
+    dmaResource_t *dmaRefCap = timerHardware->dmaCapNeg;
     dmaIdentifier_e dmaIdentifierCap = dmaGetIdentifier(dmaRefCap);
+    if (!dmaAllocate(dmaIdentifierCap, OWNER_MOTOR, RESOURCE_INDEX(reorderedMotorIndex))) {
+        return false;
+    }
+    dmaRefCap = timerHardware->dmaCapPos;
+    dmaIdentifierCap = dmaGetIdentifier(dmaRefCap);
     if (!dmaAllocate(dmaIdentifierCap, OWNER_MOTOR, RESOURCE_INDEX(reorderedMotorIndex))) {
         return false;
     }
@@ -267,7 +272,6 @@ bool pwmDshotMotorHardwareConfig(const timerHardware_t *timerHardware, uint8_t m
     TIM_TypeDef *timer = timerHardware->tim;
 
     dma_channel_config_t *ch_config = &dshot_dma_config[motorIndex];
-    DMA_Type* base = motor->timerHardware->dma_base;
     uint32_t reload = 0;
 
     reload = (float) timerClock(timer) / getDshotHz(pwmProtocolType) * MOTOR_BITLENGTH - 1;
@@ -286,6 +290,7 @@ bool pwmDshotMotorHardwareConfig(const timerHardware_t *timerHardware, uint8_t m
     motor->timer = &dmaMotorTimers[timerIndex];
     motor->index = motorIndex;
     motor->timerHardware = timerHardware;
+    DMA_Type* base = motor->timerHardware->dma_base;
 
     pwm_pair_config_t cmp_pair_config = { 0 };
     if (dmaMotorTimers[timerIndex].inited == false) {
@@ -310,8 +315,6 @@ bool pwmDshotMotorHardwareConfig(const timerHardware_t *timerHardware, uint8_t m
         pwm_config.dead_zone_in_half_cycle = 0;
         pwm_config.invert_output = (output & TIMER_OUTPUT_INVERTED) ? false : true;
     }
-    reload = pwm_get_reload_val(timer);
-    dshot_duty_count = reload;
     cmp_config[0].mode = pwm_cmp_mode_output_compare;
     cmp_config[0].cmp = reload;
     cmp_config[0].update_trigger = pwm_shadow_register_update_on_hw_event;
@@ -383,12 +386,12 @@ bool pwmDshotMotorHardwareConfig(const timerHardware_t *timerHardware, uint8_t m
     trgm_io_config2.type = trgm_output_same_as_input;
     trgm_io_config2.input = trg_resource->trgmux_in_pos;
     trgm_output_config(trg_resource->trgm_pos, trg_resource->trgmux_out_pos, &trgm_io_config2);
-    if (timerHardware->trgm_output3 && timerHardware->trgm_src3) {
+    if (trg_resource->trgm_ref && trg_resource->trgmux_in_ref && trg_resource->trgmux_out_ref) {
         trgm_output_t trgm_io_config3 = {0};
         trgm_io_config3.invert = 0;
         trgm_io_config3.type = trgm_output_same_as_input;
-        trgm_io_config3.input = timerHardware->trgm_src3;
-        trgm_output_config(timerHardware->trgm3, timerHardware->trgm_output3, &trgm_io_config3);
+        trgm_io_config3.input = trg_resource->trgmux_in_ref;
+        trgm_output_config(trg_resource->trgm_ref, trg_resource->trgmux_out_ref, &trgm_io_config3);
     }
     dmamux_config(HPM_DMAMUX, \
                   DMA_SOC_CHN_TO_DMAMUX_CHN(timerHardware->dma_pos, ((uint32_t)timerHardware->gptmr_dma_ch_pos)), \
@@ -424,7 +427,7 @@ bool pwmDshotMotorHardwareConfig(const timerHardware_t *timerHardware, uint8_t m
         // avoid high line during startup to prevent bootloader activation
         
         clock_add_to_group(timerHardware->gptmr_clock, 0);
-        setup_dshot_telemetry_dma(motor);
+        setup_dshot_telemetry_dma(motor, pwmProtocolType);
     }
 #endif
 

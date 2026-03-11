@@ -24,7 +24,9 @@
 
 #include "drivers/io_types.h"
 #include "drivers/time.h"
+#ifdef HPM6750
 #include "hpm_adc12_drv.h"
+#endif
 #include "hpm_adc16_drv.h"
 
 #ifndef ADC_INSTANCE

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025-2026 HPMicro
+ * Copyright (c) 2026 HPMicro
  * SPDX-License-Identifier: BSD-3-Clause
  *
  */
@@ -75,8 +75,9 @@
 #undef USE_RX_SPI
 #undef USE_OSD_HD
 
+#define USE_LATE_TASK_STATISTICS   1
 #define FAST_IRQ_HANDLER FAST_CODE
-#define TARGET_BOARD_IDENTIFIER "HPM6754"
+#define TARGET_BOARD_IDENTIFIER "HPM6360"
 #define USE_SDCARD_SDIO 1
 #define SDIO_DEVICE SDIODEV_1
 #define MAX_SUPPORTED_MOTORS 4
@@ -102,10 +103,10 @@
 #define U_ID_1 1
 #define U_ID_2 2
 #define USE_EXTI
-#define LED0_PIN PD3
+#define LED0_PIN PB3
 #define LED0_INVERTED 1
 #define USE_ADC
-#define ADC_VBAT_PIN PE16
+#define ADC_VBAT_PIN PB16
 #define USE_PERSISTENT_OBJECTS 1
 #define DEFAULT_VOLTAGE_METER_SOURCE VOLTAGE_METER_ADC
 #define TASK_GYROPID_DESIRED_PERIOD TASK_PERIOD_HZ (1000)
@@ -115,13 +116,13 @@
 #define USE_UART1
 #define UART1_TX_PIN PY6
 #define UART1_RX_PIN PY7
-#define USE_UART6
-#define UART6_TX_PIN PD7
-#define UART6_RX_PIN PD6
-#define USE_UART8
-#define UART8_TX_PIN PE31
-#define UART8_RX_PIN PE30
-#define GPS_UART SERIAL_PORT_USART3
+#define USE_UART2
+#define UART2_TX_PIN PC24
+#define UART2_RX_PIN PC25
+#define USE_UART3
+#define UART3_TX_PIN PC27
+#define UART3_RX_PIN PC26
+
 #define USE_MOTOR
 #define SERIAL_PORT_COUNT 4
 #define REQUIRE_CC_ARM_PRINTF_SUPPORT
@@ -135,50 +136,64 @@
 #define USE_I2C_DEVICE_1
 #define USE_SPI
 #define USE_SPI_DMA_ENABLE_LATE
-#define USE_SPI_DEVICE_1
-#define USE_SPI_DEVICE_2
-#define USE_SPI_DEVICE_3
+// #define USE_SPI_DEVICE_1
+// #define USE_SPI_DEVICE_2
+// #define USE_SPI_DEVICE_3
+#define USE_SPI_DEVICE_4
 #define USE_I2C_PULLUP 1
 #define USE_PIN_AF
 #define USE_DMA_SPEC
 #define USE_MAX7456
 #define MAX7456_SPI_CS_PIN PA26
 #define MAX7456_SPI_INSTANCE SPI3
-#define MOTOR1_PIN PA19
-#define MOTOR2_PIN PA20
-#define MOTOR3_PIN PA24
-#define MOTOR4_PIN PA25
+#define MOTOR1_PIN PC0
+#define MOTOR2_PIN PC1
+#define MOTOR3_PIN PC2
+#define MOTOR4_PIN PC3
 #define USE_DSHOT_TELEMETRY 1
 #define USE_RPM_FILTER 1
 #define USE_GYRO_SPI_ICM42605 1
 #define USE_ACC_SPI_ICM42605 1
 #define USE_OSD
-#define SPI1_SCK_PIN PZ3
-#define SPI1_SDI_PIN PZ4
-#define SPI1_SDO_PIN PZ5
-#define SPI2_SCK_PIN PD31
-#define SPI2_SDI_PIN PE4
-#define SPI2_SDO_PIN PD30
-#define SPI3_SCK_PIN PB0
-#define SPI3_SDI_PIN PA27
-#define SPI3_SDO_PIN PA31
+#define SPI1_SCK_PIN PC5
+#define SPI1_SDO_PIN PC5
+#define SPI1_SDI_PIN PC5
+#define SPI1_CS_PIN  PC5
+#define SPI2_SCK_PIN PC5
+#define SPI2_SDO_PIN PC5
+#define SPI2_SDI_PIN PC5
+#define SPI2_CS_PIN  PC5
+#define SPI3_SCK_PIN PC5
+#define SPI3_SDO_PIN PC5
+#define SPI3_SDI_PIN PC5
+#define SPI3_CS_PIN  PC5
+#define SPI4_SCK_PIN PC20
+#define SPI4_SDO_PIN PC19
+#define SPI4_SDI_PIN PC21
+#define SPI4_CS_PIN  PC14
+#define SDCARD_DETECT_CS_PIN  PC5
 #define SDCARD_DETECT_INVERTED
-#define SDCARD_DETECT_PIN PE18
+#define SDCARD_DETECT_PIN PB18
 #define SDCARD_SPI_CS_PIN PF24
 #define SDCARD_SPI_INSTANCE SPI2
 #define USE_SPI_GYRO 1
-#define GYRO_1_SPI_INSTANCE SPI2
-#define GYRO_1_CS_PIN PE3
-#define GYRO_1_EXTI_PIN PE15
-#define GYRO_2_CS_PIN PZ2
+#define GYRO_1_SPI_INSTANCE SPI4
+#define GYRO_1_CS_PIN PC14
+#define GYRO_1_EXTI_PIN PC13
+#define GYRO_2_CS_PIN PZ3
 #define GYRO_2_EXTI_PIN PZ7
 #define I2C_DEVICE I2CDEV_1
+#define I2C1_SCL_PIN PC5
+#define I2C1_SDA_PIN PC5
+#define GPTMR0_CAPT_0_PIN PC5
+#define GPTMR0_CAPT_1_PIN PC5
+#define GPTMR3_CAPT_0_PIN PC5
+#define GPTMR3_CAPT_1_PIN PC5
+#define GPIO_B_02_PIN PC5
+#define GPIO_B_03_PIN PC5
 #define TARGET_IO_PORTA 0xffffffff
 #define TARGET_IO_PORTB 0xffffffff
 #define TARGET_IO_PORTC 0xffffffff
-#define TARGET_IO_PORTD 0xffffffff
-#define TARGET_IO_PORTE 0xffffffff
-#define TARGET_IO_PORTF 0xffffffff
 #define TARGET_IO_PORTX 0xffffffff
 #define TARGET_IO_PORTY 0xffffffff
 #define TARGET_IO_PORTZ 0xffffffff
@@ -279,7 +294,7 @@ typedef enum
 
 typedef GPIO_Type GPIO_TypeDef;
 #define GPIOA_BASE HPM_GPIO0_BASE
-#if defined(HPM6750) || defined(HPM6360)
+#ifdef HPM6360
 typedef PWM_Type TIM_TypeDef;
 #else
 typedef PWMV2_Type TIM_TypeDef;

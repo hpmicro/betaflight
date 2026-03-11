@@ -28,8 +28,8 @@
 
 typedef struct spiPinConfig_s {
     ioTag_t ioTagSck;
-    ioTag_t ioTagMiso;
     ioTag_t ioTagMosi;
+    ioTag_t ioTagMiso;
     int8_t txDmaopt;
     int8_t rxDmaopt;
 } spiPinConfig_t;

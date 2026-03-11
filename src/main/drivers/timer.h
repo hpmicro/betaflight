@@ -97,7 +97,7 @@ typedef struct timerHardware_s {
     uint32_t dmaChannelConfigured;
     dmaResource_t *dmaRef;
     uint32_t dmaChannel; // XXX Can be much smaller (e.g. uint8_t)
-    dmaResource_t *dmaCap;
+    dmaResource_t *dmaCapNeg, *dmaCapPos;
     uint32_t dmaTimUPChannel;
     uint8_t dmaTimUPIrqHandler;
 #endif
@@ -109,8 +109,6 @@ typedef struct timerHardware_s {
     uint32_t irqn;
     TRGM_Type *trgm3;
     uint32_t gptmr_io_function;
-    uint32_t trgm_src3;
-    uint32_t trgm_output3;
 #endif
 } timerHardware_t;
 

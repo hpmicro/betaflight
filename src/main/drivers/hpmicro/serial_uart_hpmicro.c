@@ -78,6 +78,10 @@ uartPort_t *serialUART(UARTDevice_e device, uint32_t baudRate, portMode_e mode,
     return s;
 }
 #ifdef HPM6750
+#define UART1_IRQn IRQn_UART0
+#define UART6_IRQn IRQn_UART5
+#define UART7_IRQn IRQn_UART6
+#define UART8_IRQn IRQn_UART7
 const uartHardware_t uartHardware[UARTDEV_COUNT] = {
 
     {
@@ -148,6 +152,86 @@ const uartHardware_t uartHardware[UARTDEV_COUNT] = {
     .rxBuffer = uart8RxBuffer,
     .txBufferSize = sizeof(uart8TxBuffer),
     .rxBufferSize = sizeof(uart8RxBuffer),
+    },
+
+};
+#endif
+
+#ifdef HPM6360
+#define UART1_IRQn IRQn_UART0
+#define UART2_IRQn IRQn_UART1
+#define UART3_IRQn IRQn_UART2
+const uartHardware_t uartHardware[UARTDEV_COUNT] = {
+
+    {
+    .device = UARTDEV_1,
+    .reg = (USART_TypeDef *)HPM_UART0_BASE,
+    .rxPins =
+    {
+        {
+            IO_TAG(PY7),
+        },
+    },
+    .txPins =
+    {
+        {
+            IO_TAG(PY6),
+        },
+    },
+    .af = IOC_PY07_FUNC_CTL_UART0_RXD,
+    .pioc_func = PIOC_PY07_FUNC_CTL_SOC_PY_07,
+    .rcc = clock_uart0,
+    .irqn = IRQn_UART0,
+    .txBuffer = uart1TxBuffer,
+    .rxBuffer = uart1RxBuffer,
+    .txBufferSize = sizeof(uart1TxBuffer),
+    .rxBufferSize = sizeof(uart1RxBuffer),
+    },
+    {
+    .device = UARTDEV_2,
+    .reg = (USART_TypeDef *)HPM_UART1_BASE,
+    .rxPins =
+    {
+        {
+            IO_TAG(PC25),
+        },
+    },
+    .txPins =
+    {
+        {
+            IO_TAG(PC24),
+        },
+    },
+    .af = IOC_PC25_FUNC_CTL_UART1_RXD,
+    .rcc = clock_uart1,
+    .irqn = IRQn_UART1,
+    .txBuffer = uart2TxBuffer,
+    .rxBuffer = uart2RxBuffer,
+    .txBufferSize = sizeof(uart2TxBuffer),
+    .rxBufferSize = sizeof(uart2RxBuffer),
+    },
+    {
+    .device = UARTDEV_3,
+    .reg = (USART_TypeDef *)HPM_UART2_BASE,
+    .rxPins =
+    {
+        {
+            IO_TAG(PC27),
+        },
+    },
+    .txPins =
+    {
+        {
+            IO_TAG(PC26),
+        },
+    },
+    .af = IOC_PC27_FUNC_CTL_UART2_RXD,
+    .rcc = clock_uart2,
+    .irqn = IRQn_UART2,
+    .txBuffer = uart3TxBuffer,
+    .rxBuffer = uart3RxBuffer,
+    .txBufferSize = sizeof(uart3TxBuffer),
+    .rxBufferSize = sizeof(uart3RxBuffer),
     },
 
 };
@@ -235,7 +319,7 @@ void uart_isr0(void)
     uartDevice_t *uart = (uartDevmap[UARTDEV_1]);
     uart_isr(uart);
 }
-SDK_DECLARE_EXT_ISR_M(IRQn_UART0, uart_isr0)
+SDK_DECLARE_EXT_ISR_M(UART1_IRQn, uart_isr0)
 #endif
 
 #ifdef USE_UART2
@@ -244,7 +328,7 @@ void uart_isr1(void)
     uartDevice_t *uartPort = (uartDevmap[UARTDEV_2]);
     uart_isr(uartPort);
 }
-SDK_DECLARE_EXT_ISR_M(IRQn_UART1, uart_isr1)
+SDK_DECLARE_EXT_ISR_M(UART2_IRQn, uart_isr1)
 #endif
 
 #ifdef USE_UART3
@@ -253,7 +337,7 @@ void uart_isr2(void)
     uartDevice_t *uartPort = (uartDevmap[UARTDEV_3]);
     uart_isr(uartPort);
 }
-SDK_DECLARE_EXT_ISR_M(IRQn_UART2, uart_isr2)
+SDK_DECLARE_EXT_ISR_M(UART3_IRQn, uart_isr2)
 #endif
 
 #ifdef USE_UART4
@@ -262,7 +346,7 @@ void uart_isr3(void)
     uartDevice_t *uartPort = (uartDevmap[UARTDEV_4]);
     uart_isr(uartPort);
 }
-SDK_DECLARE_EXT_ISR_M(IRQn_UART3, uart_isr3)
+SDK_DECLARE_EXT_ISR_M(UART4_IRQn, uart_isr3)
 #endif
 
 #ifdef USE_UART5
@@ -271,7 +355,7 @@ void uart_isr4(void)
     uartDevice_t *uartPort = (uartDevmap[UARTDEV_5]);
     uart_isr(uartPort);
 }
-SDK_DECLARE_EXT_ISR_M(IRQn_UART4, uart_isr4)
+SDK_DECLARE_EXT_ISR_M(UART5_IRQn, uart_isr4)
 #endif
 
 #ifdef USE_UART6
@@ -280,7 +364,7 @@ void uart_isr5(void)
     uartDevice_t *uartPort = (uartDevmap[UARTDEV_6]);
     uart_isr(uartPort);
 }
-SDK_DECLARE_EXT_ISR_M(IRQn_UART5, uart_isr5)
+SDK_DECLARE_EXT_ISR_M(UART6_IRQn, uart_isr5)
 #endif
 
 #ifdef USE_UART7
@@ -289,7 +373,7 @@ void uart_isr6(void)
     uartDevice_t *uartPort = (uartDevmap[UARTDEV_7]);
     uart_isr(uartPort);
 }
-SDK_DECLARE_EXT_ISR_M(IRQn_UART6, uart_isr6)
+SDK_DECLARE_EXT_ISR_M(UART7_IRQn, uart_isr6)
 #endif
 
 #ifdef USE_UART8
@@ -298,7 +382,7 @@ void uart_isr7(void)
     uartDevice_t *uartPort = (uartDevmap[UARTDEV_8]);
     uart_isr(uartPort);
 }
-SDK_DECLARE_EXT_ISR_M(IRQn_UART7, uart_isr7)
+SDK_DECLARE_EXT_ISR_M(UART8_IRQn, uart_isr7)
 #endif
 
 #ifdef USE_UART9
@@ -307,7 +391,7 @@ void uart_isr8(void)
     uartDevice_t *uartPort = (uartDevmap[UARTDEV_9]);
     uart_isr(uartPort);
 }
-SDK_DECLARE_EXT_ISR_M(IRQn_UART8, uart_isr8)
+SDK_DECLARE_EXT_ISR_M(UART9_IRQn, uart_isr8)
 #endif
 #ifdef USE_DMA
 void uartTryStartTxDMA(uartPort_t *s) { (void)s; }

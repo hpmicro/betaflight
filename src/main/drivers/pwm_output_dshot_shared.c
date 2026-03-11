@@ -48,7 +48,7 @@
 #include "drivers/motor.h"
 
 #include "pwm_output_dshot_shared.h"
-extern uint32_t dshot_duty_count, dshot_telemetry_count;
+extern uint32_t dshot_duty_count, dshot_telemetry_bit_width;
 FAST_DATA_ZERO_INIT uint8_t dmaMotorTimerCount = 0;
 #ifdef STM32F7
 FAST_DATA_ZERO_INIT motorDmaTimer_t dmaMotorTimers[MAX_DMA_TIMERS];
@@ -190,7 +190,7 @@ static uint32_t decodeTelemetryPacket(uint32_t buffer[], uint32_t count)
             if (bits >= 21) {
                 break;
             }
-            len = (diff + 30) / 120;
+            len = (diff + (MOTOR_TELEMETRY_BIT_WIDTH / 4)) / MOTOR_TELEMETRY_BIT_WIDTH;
         } else {
             len = 21 - bits;
         }

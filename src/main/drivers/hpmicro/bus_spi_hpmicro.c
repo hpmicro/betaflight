@@ -50,6 +50,9 @@ void spiInitDevice(SPIDevice device)
     spi_timing_config_t timing_config = {0};
     uint32_t spi_sclk_freq = 4000000;
     spiDevice_t *spi = &(spiDevice[device]);
+    if(spi->dev == NULL) {
+        return;
+    }
     uint32_t spi_clcok = clock_get_frequency(spi->rcc);
     spi_format_config_t format_config = {0};
 
@@ -252,7 +255,6 @@ void spiSequenceStart(const extDevice_t *dev)
     busDevice_t *bus = dev->bus;
     SPI_Type *instance = (SPI_Type *)(bus->busType_u.spi.instance);
     bool dmaSafe = dev->useDMA;
-    uint32_t xferLen = 0;
     uint32_t segmentCount = 0;
 
     dev->bus->initSegment = true;
@@ -279,15 +281,9 @@ void spiSequenceStart(const extDevice_t *dev)
 
     // Check that any there are no attempts to DMA to/from CCD SRAM
     for (busSegment_t *checkSegment = (busSegment_t *)bus->curSegment; checkSegment->len; checkSegment++) {
-        // Check there is no receive data as only transmit DMA is available
-        if (((checkSegment->u.buffers.rxData) && (bus->dmaRx == (dmaChannelDescriptor_t *)NULL)) ||
-            (checkSegment->u.buffers.txData)) {
-            dmaSafe = false;
-            break;
-        }
+
         // Note that these counts are only valid if dmaSafe is true
         segmentCount++;
-        xferLen += checkSegment->len;
     }
 
     if (bus->useDMA && dmaSafe && (!bus->curSegment[segmentCount].negateCS)) {

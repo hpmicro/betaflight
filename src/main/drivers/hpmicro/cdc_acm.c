@@ -12,8 +12,8 @@
 #define CDC_IN_EP  0x81
 #define CDC_OUT_EP 0x01
 #define CDC_INT_EP 0x83
-#define CDC_ACM_TX_BUFFER_SIZE 512
-#define CDC_ACM_RX_BUFFER_SIZE 512
+#define CDC_ACM_TX_BUFFER_SIZE 2048
+#define CDC_ACM_RX_BUFFER_SIZE 2048
 /*!< config descriptor size */
 #define USB_CONFIG_SIZE (9 + CDC_ACM_DESCRIPTOR_LEN)
 
@@ -110,7 +110,9 @@ const struct usb_descriptor cdc_descriptor = {
 
 volatile uint32_t max_tx = 0, max_rx = 0;
 USB_NOCACHE_RAM_SECTION USB_MEM_ALIGNX uint8_t read_buffer[CDC_ACM_RX_BUFFER_SIZE];
-USB_NOCACHE_RAM_SECTION USB_MEM_ALIGNX uint8_t write_buffer[CDC_ACM_TX_BUFFER_SIZE];
+uint8_t write_buffer[CDC_ACM_TX_BUFFER_SIZE];
+USB_NOCACHE_RAM_SECTION USB_MEM_ALIGNX uint8_t tx_buffer[CDC_ACM_TX_BUFFER_SIZE];
+volatile uint32_t write_buffer_rd = 0;
 volatile uint32_t write_buffer_wr = 0;
 volatile bool ep_tx_busy_flag;
 
@@ -154,7 +156,6 @@ void usbd_cdc_acm_bulk_out(uint8_t busid, uint8_t ep, uint32_t nbytes)
 
 void usbd_cdc_acm_bulk_in(uint8_t busid, uint8_t ep, uint32_t nbytes)
 {
-    write_buffer_wr = 0;
     if ((nbytes % usbd_get_ep_mps(busid, ep)) == 0 && nbytes) {
         /* send zlp */
         usbd_ep_start_write(busid, ep, NULL, 0);
@@ -198,19 +199,24 @@ void usbd_cdc_acm_set_dtr(uint8_t busid, uint8_t intf, bool dtr)
 
 void bf_usbd_ep_write_buffer(const void *data, int count)
 {
-    memcpy(&write_buffer[write_buffer_wr], data, count);
-    write_buffer_wr += count;
-    if (write_buffer_wr > max_tx) {
-        max_tx = write_buffer_wr;
-    }
+    const uint8_t *src = (const uint8_t *)data;
+    for (int i = 0; i < count; i++) {
+        uint32_t next_wr = (write_buffer_wr + 1) % CDC_ACM_TX_BUFFER_SIZE;
 
-    assert(write_buffer_wr < CDC_ACM_TX_BUFFER_SIZE);
+        write_buffer[write_buffer_wr] = src[i];
+        write_buffer_wr = next_wr;
+    }
 }
 
 void bf_usbd_ep_start_write(void)
 {
     ep_tx_busy_flag = true;
-    usbd_ep_start_write(0, CDC_IN_EP, &write_buffer[0], write_buffer_wr);
+    uint32_t len = 0;
+    while (write_buffer_rd != write_buffer_wr && len < CDC_ACM_TX_BUFFER_SIZE) {
+        tx_buffer[len++] = write_buffer[write_buffer_rd];
+        write_buffer_rd = (write_buffer_rd + 1) % CDC_ACM_TX_BUFFER_SIZE;
+    }
+    usbd_ep_start_write(0, CDC_IN_EP, tx_buffer, len);
 }
 
 bool bf_get_tx_flag(void)

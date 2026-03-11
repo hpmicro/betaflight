@@ -61,8 +61,13 @@ static const uint8_t extiGroupIRQn[EXTI_IRQ_GROUPS] = {
     IRQn_GPIO0_B,  //1
     IRQn_GPIO0_C,  //2
     IRQn_GPIO0_D,  //3
+#ifdef HPM6750
     IRQn_GPIO0_E,  //4
     IRQn_GPIO0_F,  //5
+#elif defined(HPM6360)
+    255,  //4
+    255,  //5
+#endif
     255,  //6
     255,  //7
     255,  //8
@@ -159,14 +164,14 @@ FAST_CODE static void gpio_interrupt_handler(GPIO_Type *base, unsigned char port
     for (int i = 0; i < 32; i++) {
         if (flag & (1 << i)) {
             gpio_clear_pin_interrupt_flag(base, port_index, i);
-            if (extiChannelRecs[group].handler[i]->fn != NULL) {
+            if (extiChannelRecs[group].handler[i] && extiChannelRecs[group].handler[i]->fn != NULL) {
                 extiChannelRecs[group].handler[i]->fn(extiChannelRecs[group].handler[i]);
             }
         }
     }
 }
 
-#ifdef IRQn_GPIO0_A
+#if defined(IRQn_GPIO0_A) && defined(GPIO_DI_GPIOA)
 void gpio_porta_isr(void)
 {
     gpio_interrupt_handler(HPM_GPIO0, GPIO_DI_GPIOA, HPM_GPIOA);
@@ -174,7 +179,7 @@ void gpio_porta_isr(void)
 SDK_DECLARE_EXT_ISR_M(IRQn_GPIO0_A, gpio_porta_isr)
 #endif
 
-#ifdef IRQn_GPIO0_B
+#if defined(IRQn_GPIO0_B) && defined(GPIO_DI_GPIOB)
 void gpio_portb_isr(void)
 {
     gpio_interrupt_handler(HPM_GPIO0, GPIO_DI_GPIOB, HPM_GPIOB);
@@ -182,7 +187,7 @@ void gpio_portb_isr(void)
 SDK_DECLARE_EXT_ISR_M(IRQn_GPIO0_B , gpio_portb_isr)
 #endif
 
-#ifdef IRQn_GPIO0_C
+#if defined(IRQn_GPIO0_C) && defined(GPIO_DI_GPIOC)
 void gpio_portc_isr(void)
 {
     gpio_interrupt_handler(HPM_GPIO0, GPIO_DI_GPIOC, HPM_GPIOC);
@@ -190,7 +195,7 @@ void gpio_portc_isr(void)
 SDK_DECLARE_EXT_ISR_M(IRQn_GPIO0_C , gpio_portc_isr)
 #endif
 
-#ifdef IRQn_GPIO0_D
+#if defined(IRQn_GPIO0_D) && defined(GPIO_DI_GPIOD)
 void gpio_portd_isr(void)
 {
     gpio_interrupt_handler(HPM_GPIO0, GPIO_DI_GPIOD, HPM_GPIOD);
@@ -198,7 +203,7 @@ void gpio_portd_isr(void)
 SDK_DECLARE_EXT_ISR_M(IRQn_GPIO0_D , gpio_portd_isr)
 #endif
 
-#ifdef IRQn_GPIO0_E
+#if defined(IRQn_GPIO0_E) && defined(GPIO_DI_GPIOE)
 void gpio_porte_isr(void)
 {
     gpio_interrupt_handler(HPM_GPIO0, GPIO_DI_GPIOE, HPM_GPIOE);
@@ -206,7 +211,7 @@ void gpio_porte_isr(void)
 SDK_DECLARE_EXT_ISR_M(IRQn_GPIO0_E , gpio_porte_isr)
 #endif
 
-#ifdef IRQn_GPIO0_F
+#if defined(IRQn_GPIO0_F) && defined(GPIO_DI_GPIOF)
 void gpio_portf_isr(void)
 {
     gpio_interrupt_handler(HPM_GPIO0, GPIO_DI_GPIOF, HPM_GPIOF);
@@ -214,7 +219,7 @@ void gpio_portf_isr(void)
 SDK_DECLARE_EXT_ISR_M(IRQn_GPIO0_F , gpio_portf_isr)
 #endif
 
-#ifdef IRQn_GPIO0_X
+#if defined(IRQn_GPIO0_X) && defined(GPIO_DI_GPIOX)
 void gpio_portx_isr(void)
 {
     gpio_interrupt_handler(HPM_GPIO0, GPIO_DI_GPIOX, HPM_GPIOX);
@@ -222,7 +227,7 @@ void gpio_portx_isr(void)
 SDK_DECLARE_EXT_ISR_M(IRQn_GPIO0_X, gpio_portx_isr)
 #endif
 
-#ifdef IRQn_GPIO0_Y
+#if defined(IRQn_GPIO0_Y) && defined(GPIO_DI_GPIOY)
 void gpio_porty_isr(void)
 {
     gpio_interrupt_handler(HPM_GPIO0, GPIO_DI_GPIOY, HPM_GPIOY);
@@ -230,7 +235,7 @@ void gpio_porty_isr(void)
 SDK_DECLARE_EXT_ISR_M(IRQn_GPIO0_Y, gpio_porty_isr)
 #endif
 
-#ifdef IRQn_GPIO0_Z
+#if defined(IRQn_GPIO0_Z) && defined(GPIO_DI_GPIOZ)
 void gpio_portz_isr(void)
 {
     gpio_interrupt_handler(HPM_GPIO0, GPIO_DI_GPIOZ, HPM_GPIOZ);

@@ -34,8 +34,8 @@
 
 #define SCHED_TASK_DEFER_MASK           0x1F // Scheduler loop count is masked with this and when 0 long running tasks are processed
 
-#define SCHED_START_LOOP_MIN_US         1   // Wait at start of scheduler loop if gyroTask is nearly due
-#define SCHED_START_LOOP_MAX_US         1
+#define SCHED_START_LOOP_MIN_US         5   // Wait at start of scheduler loop if gyroTask is nearly due
+#define SCHED_START_LOOP_MAX_US         50
 #define SCHED_START_LOOP_DOWN_STEP      (3)  // Fraction of a us to reduce start loop wait
 #define SCHED_START_LOOP_UP_STEP        1   // Fraction of a us to increase start loop wait
 

@@ -15,7 +15,11 @@
 #include "drivers/io.h"
 #include "drivers/adc.h"
 #include "drivers/adc_impl.h"
+#ifdef HPM6750
 #include "hpm_adc12_drv.h"
+#elif defined(HPM6360)
+#include "hpm_adc16_drv.h"
+#endif
 #include "hpm_clock_drv.h"
 #include "drivers/adc.h"
 #include "pg/adc.h"
@@ -80,6 +84,7 @@ int adcFindTagMapEntry(ioTag_t tag)
 
 void adcInitDevice(ADC_TypeDef *adcdev)
 {
+#ifdef HPM6750
     adc12_config_t cfg;
 
     /* initialize an ADC instance */
@@ -96,6 +101,24 @@ void adcInitDevice(ADC_TypeDef *adcdev)
     } else {
         printf("ADC%x initialization failed!\n", adcdev);
     }
+#elif defined(HPM6360)
+    adc16_config_t cfg;
+
+    /* initialize an ADC instance */
+    adc16_get_default_config(&cfg);
+
+    cfg.res            = adc16_res_16_bits;
+    cfg.conv_mode      = adc16_conv_mode_period;
+    cfg.adc_clk_div    = adc16_clock_divider_4;
+    cfg.sel_sync_ahb   = true;
+
+
+    /* adc16 initialization */
+    if (adc16_init(adcdev, &cfg) == status_success) {
+    } else {
+        printf("ADC%x initialization failed!\n", adcdev);
+    }
+#endif
 }
 
 void adcInit(const adcConfig_t *config)
@@ -179,9 +202,15 @@ void adcInit(const adcConfig_t *config)
         }
         clock_add_to_group(adc->rccADC, 0);
         clock_set_adc_source(adc->rccADC, clk_adc_src_ahb0);
+#ifdef HPM6750
         if(adc12_deinit(adc->ADCx) != status_success) {
             printf("Deinit ADC error %d\n", dev);
         }
+#elif defined(HPM6360)
+        if(adc16_deinit(adc->ADCx) != status_success) {
+            printf("Deinit ADC error %d\n", dev);
+        }
+#endif
     }
     // Configure ADCx with inputs
 
@@ -199,7 +228,6 @@ void adcInit(const adcConfig_t *config)
         // Configure channels
 
         for (int adcChan = 0; adcChan < ADC_CHANNEL_COUNT; adcChan++) {
-            adc12_channel_config_t ch_cfg;
             if (!adcOperatingConfig[adcChan].enabled) {
                 continue;
             }
@@ -209,6 +237,8 @@ void adcInit(const adcConfig_t *config)
             }
 
             adcOperatingConfig[adcChan].dmaIndex = dmaBufferIndex++;
+#ifdef HPM6750
+            adc12_channel_config_t ch_cfg;
             /* get a default channel config */
             adc12_get_channel_default_config(&ch_cfg);
             ch_cfg.ch = adcOperatingConfig[adcChan].adcChannel;
@@ -221,6 +251,21 @@ void adcInit(const adcConfig_t *config)
             prd_cfg.period_count = 5;     /* 104.86ms when AHB clock at 200MHz is ADC clock source */
 
             adc12_set_prd_config(adc->ADCx, &prd_cfg);
+#elif defined(HPM6360)
+            adc16_channel_config_t ch_cfg;
+            /* get a default channel config */
+            adc16_get_channel_default_config(&ch_cfg);
+            ch_cfg.ch = adcOperatingConfig[adcChan].adcChannel;
+            ch_cfg.sample_cycle = adcOperatingConfig[adcChan].sampleTime;
+            adc16_init_channel(adc->ADCx, &ch_cfg);
+            adc16_prd_config_t prd_cfg;
+
+            prd_cfg.ch           = adcOperatingConfig[adcChan].adcChannel;
+            prd_cfg.prescale     = 22;    /* Set divider: 2^22 clocks */
+            prd_cfg.period_count = 5;     /* 104.86ms when AHB clock at 200MHz is ADC clock source */
+
+            adc16_set_prd_config(adc->ADCx, &prd_cfg);
+#endif
 
         }
     }
@@ -232,11 +277,19 @@ void adcGetChannelValues(void)
         if (adcOperatingConfig[i].enabled) {
             uint16_t result;
             adcDevice_t *adc = &adcDevice[adcOperatingConfig[i].adcDevice];
+#ifdef HPM6750
             if(status_success != adc12_get_prd_result(adc->ADCx, adcOperatingConfig[i].adcChannel, &result)) {
                 printf("Get ADC %d channel %d failed\n", adcOperatingConfig[i].adcDevice, adcOperatingConfig[i].adcChannel);
             } else {
                 adcValues[i] = result >> 4;
             }
+#elif defined(HPM6360)
+            if(status_success != adc16_get_prd_result(adc->ADCx, adcOperatingConfig[i].adcChannel, &result)) {
+                printf("Get ADC %d channel %d failed\n", adcOperatingConfig[i].adcDevice, adcOperatingConfig[i].adcChannel);
+            } else {
+                adcValues[i] = result >> 8;
+            }
+#endif
         }
     }
 }

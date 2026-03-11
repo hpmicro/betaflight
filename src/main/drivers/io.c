@@ -189,7 +189,7 @@ void IOInitGlobal(void)
     for (unsigned pin = 0; pin < 32; pin++) {
         if (DEFIO_PORT_A_USED_MASK & (1 << pin)) {
             ioRec->gpio = (GPIO_TypeDef *)(GPIOA_BASE);   // ports are 0x400 apart
-            ioRec->pin = 1 << pin;
+            ioRec->pin = pin;
             ioRec->ioc_index = IOC_PAD_PA00 + pin;
             ioRec->pioc_index = (uint32_t)-1;
             ioRec->bioc_index = (uint32_t)-1;
@@ -201,7 +201,7 @@ void IOInitGlobal(void)
     for (unsigned pin = 0; pin < 32; pin++) {
         if (DEFIO_PORT_B_USED_MASK & (1 << pin)) {
             ioRec->gpio = (GPIO_TypeDef *)(GPIOA_BASE + 0X10);   // ports are 0x400 apart
-            ioRec->pin = 1 << pin;
+            ioRec->pin = pin;
             ioRec->ioc_index = IOC_PAD_PB00 + pin;
             ioRec->pioc_index = (uint32_t)-1;
             ioRec->bioc_index = (uint32_t)-1;
@@ -213,7 +213,7 @@ void IOInitGlobal(void)
     for (unsigned pin = 0; pin < 32; pin++) {
         if (DEFIO_PORT_C_USED_MASK & (1 << pin)) {
             ioRec->gpio = (GPIO_TypeDef *)(GPIOA_BASE + 0x20);   // ports are 0x400 apart
-            ioRec->pin = 1 << pin;
+            ioRec->pin = pin;
             ioRec->ioc_index = IOC_PAD_PC00 + pin;
             ioRec->pioc_index = (uint32_t)-1;
             ioRec->bioc_index = (uint32_t)-1;
@@ -225,7 +225,7 @@ void IOInitGlobal(void)
     for (unsigned pin = 0; pin < 32; pin++) {
         if (DEFIO_PORT_D_USED_MASK & (1 << pin)) {
             ioRec->gpio = (GPIO_TypeDef *)(GPIOA_BASE + 0x30);   // ports are 0x400 apart
-            ioRec->pin = 1 << pin;
+            ioRec->pin = pin;
             ioRec->ioc_index = IOC_PAD_PD00 + pin;
             ioRec->pioc_index = (uint32_t)-1;
             ioRec->bioc_index = (uint32_t)-1;
@@ -237,7 +237,7 @@ void IOInitGlobal(void)
     for (unsigned pin = 0; pin < 32; pin++) {
         if (DEFIO_PORT_E_USED_MASK & (1 << pin)) {
             ioRec->gpio = (GPIO_TypeDef *)(GPIOA_BASE + 0x40);   // ports are 0x400 apart
-            ioRec->pin = 1 << pin;
+            ioRec->pin = pin;
             ioRec->ioc_index = IOC_PAD_PE00 + pin;
             ioRec->pioc_index = (uint32_t)-1;
             ioRec->bioc_index = (uint32_t)-1;
@@ -249,7 +249,7 @@ void IOInitGlobal(void)
     for (unsigned pin = 0; pin < 32; pin++) {
         if (DEFIO_PORT_F_USED_MASK & (1 << pin)) {
             ioRec->gpio = (GPIO_TypeDef *)(GPIOA_BASE + 0x50);   // ports are 0x400 apart
-            ioRec->pin = 1 << pin;
+            ioRec->pin = pin;
             ioRec->ioc_index = IOC_PAD_PF00 + pin;
             ioRec->pioc_index = (uint32_t)-1;
             ioRec->bioc_index = (uint32_t)-1;
@@ -261,7 +261,7 @@ void IOInitGlobal(void)
     for (unsigned pin = 0; pin < 32; pin++) {
         if (DEFIO_PORT_X_USED_MASK & (1 << pin)) {
             ioRec->gpio = (GPIO_TypeDef *)(GPIOA_BASE + 0xD0);   // ports are 0x400 apart
-            ioRec->pin = 1 << pin;
+            ioRec->pin = pin;
             ioRec->ioc_index = IOC_PAD_PX00 + pin;
             ioRec->pioc_index = IOC_PAD_PX00 + pin;
             ioRec++;
@@ -272,7 +272,7 @@ void IOInitGlobal(void)
     for (unsigned pin = 0; pin < 32; pin++) {
         if (DEFIO_PORT_Y_USED_MASK & (1 << pin)) {
             ioRec->gpio = (GPIO_TypeDef *)(GPIOA_BASE + 0xE0);   // ports are 0x400 apart
-            ioRec->pin = 1 << pin;
+            ioRec->pin = pin;
             ioRec->ioc_index = IOC_PAD_PY00 + pin;
             ioRec->pioc_index = IOC_PAD_PY00 + pin;
             ioRec->bioc_index = (uint32_t)-1;
@@ -284,7 +284,7 @@ void IOInitGlobal(void)
     for (unsigned pin = 0; pin < 32; pin++) {
         if (DEFIO_PORT_Z_USED_MASK & (1 << pin)) {
             ioRec->gpio = (GPIO_TypeDef *)(GPIOA_BASE + 0xF0);   // ports are 0x400 apart
-            ioRec->pin = 1 << pin;
+            ioRec->pin = pin;
             ioRec->ioc_index = IOC_PAD_PZ00 + pin;
             ioRec->bioc_index = IOC_PAD_PZ00 + pin;
             ioRec->pioc_index = (uint32_t)-1;
@@ -297,7 +297,7 @@ void IOInitGlobal(void)
         for (unsigned pin = 0; pin < sizeof(ioDefUsedMask[0]) * 8; pin++) {
             if (ioDefUsedMask[port] & (1 << pin)) {
                 ioRec->gpio = (GPIO_TypeDef *)(GPIOA_BASE + (port << 10));   // ports are 0x400 apart
-                ioRec->pin = 1 << pin;
+                ioRec->pin = pin;
                 ioRec++;
             }
         }

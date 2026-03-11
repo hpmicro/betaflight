@@ -70,8 +70,8 @@
 typedef struct spiDefaultConfig_s {
     SPIDevice device;
     ioTag_t sck;
-    ioTag_t miso;
     ioTag_t mosi;
+    ioTag_t miso;
     dmaoptValue_t txDmaopt;
     dmaoptValue_t rxDmaopt;
 } spiDefaultConfig_t;

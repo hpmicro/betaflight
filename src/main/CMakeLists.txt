@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 sdk_inc(.)
-sdk_inc(target/HPM6750)
 sdk_inc(io)
 sdk_inc(io/asyncfatfs)
 
@@ -25,6 +24,7 @@ add_subdirectory(scheduler)
 add_subdirectory(sensors)
 add_subdirectory(target)
 add_subdirectory(telemetry)
+
 sdk_ses_set_code_placement("drivers/" ".fast")
 sdk_ses_set_code_placement("common/" ".fast")
 sdk_ses_set_code_placement("fc/" ".fast")

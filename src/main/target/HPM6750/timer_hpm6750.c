@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 HPMicro
+ * Copyright (c) 2025-2026 HPMicro
  * SPDX-License-Identifier: BSD-3-Clause
  *
  */
@@ -8,19 +8,14 @@
 #include "drivers/timer.h"
 #include "hpm_clock_drv.h"
 #include "hpm_soc.h"
+#include "hpm_iomux.h"
 
 const timerDef_t timerDefinitions[HARDWARE_TIMER_DEFINITION_COUNT] = {
-#ifdef HPM6750
     { .TIMx = HPM_PWM0,  .rcc = clock_mot0,  .inputIrq = IRQn_PWM0},
     { .TIMx = HPM_PWM1,  .rcc = clock_mot1,  .inputIrq = IRQn_PWM1},
     { .TIMx = HPM_PWM2,  .rcc = clock_mot2,  .inputIrq = IRQn_PWM2},
     { .TIMx = HPM_PWM3,  .rcc = clock_mot3,  .inputIrq = IRQn_PWM3},
-#else
-    { .TIMx = HPM_PWM0,  .rcc = clock_pwm0,  .inputIrq = IRQn_PWM0},
-    { .TIMx = HPM_PWM1,  .rcc = clock_pwm1,  .inputIrq = IRQn_PWM1},
-    { .TIMx = HPM_PWM2,  .rcc = clock_pwm2,  .inputIrq = IRQn_PWM2},
-    { .TIMx = HPM_PWM3,  .rcc = clock_pwm3,  .inputIrq = IRQn_PWM3},
-#endif
+
 };
 const timerHardware_t fullTimerHardware[FULL_TIMER_CHANNEL_COUNT] = {
     /* PWM1 */

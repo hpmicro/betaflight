@@ -50,14 +50,20 @@ dma_channel_config_t dshot_cap_neg_edge_config[MAX_SUPPORTED_MOTORS] = { 0 };
 FAST_CODE void pwmDshotSetDirectionOutput(motorDmaOutput_t * const motor)
 {
     const timerHardware_t *time_hw = motor->timerHardware;
+#ifdef HPM_USE_PWM_OUTPUT_DSHOT
     const IO_t motorIO = IOGetByTag(time_hw->tag);
-    
+#endif
     //Disable DSHOT input dma channels
     dma_disable_channel(time_hw->dma_neg, time_hw->gptmr_dma_ch_neg);
     dma_disable_channel(time_hw->dma_pos, time_hw->gptmr_dma_ch_pos);
 
     //Set IO to output and enable PWM channel
+
+#ifdef HPM_USE_PWM_OUTPUT_DSHOT
     IOConfigGPIOAF(motorIO, IOCFG_AF_PP, time_hw->alternateFunction, time_hw->palternateFunction);
+#else
+    trgm_enable_io_output(time_hw->pwm_trgm.trgm, 1 << (time_hw->trgm_port_idx));
+#endif
     pwm_enable_output(time_hw->tim, time_hw->channel);
 
     //Map dma channel to output dma request
@@ -79,10 +85,16 @@ FAST_CODE static void pwmDshotSetDirectionInput(motorDmaOutput_t * const motor)
     /* First set the output pin into input state, so it will not influence the gptmr input capture */
     const timerHardware_t *timer_hw = motor->timerHardware;
     const gptmr_input_cap_source_t *trg_resource = &timer_hw->in_cap_trgm_map;
+#ifdef HPM_USE_PWM_OUTPUT_DSHOT
     const IO_t motorIO = IOGetByTag(timer_hw->tag);
+#endif
     GPTMR_Type *gptmr_base = timer_hw->gptmr;
 
+#ifdef HPM_USE_PWM_OUTPUT_DSHOT
     IOConfigGPIOAF(motorIO, IOCFG_IN_FLOATING, 0, 0);
+#else
+    trgm_disable_io_output(timer_hw->pwm_trgm.trgm, 1 << (timer_hw->trgm_port_idx));
+#endif
 
     /* Now we restart gptmr input capture function */
 
@@ -372,7 +384,7 @@ bool pwmDshotMotorHardwareConfig(const timerHardware_t *timerHardware, uint8_t m
     /* PWM half reload generate dma request */
     trgm_dma_request_config(timerHardware->pwm_trgm.trgm, \
                             timerHardware->pwm_trgm.trg_grp, \
-                            timerHardware->pwm_trgm.trgm_src);
+                            timerHardware->pwm_trgm.trgm_dma_src);
     /* dma request trigger dma channel x to work */
     pwm_enable_dma_request(timer, PWM_DMAEN_CMPENX_SET(1<<(timerHardware->dma_req_cmp_index)));
 
@@ -381,18 +393,27 @@ bool pwmDshotMotorHardwareConfig(const timerHardware_t *timerHardware, uint8_t m
     trgm_io_config.type = trgm_output_same_as_input;
     trgm_io_config.input = trg_resource->trgmux_in_neg;
     trgm_output_config(trg_resource->trgm_neg, trg_resource->trgmux_out_neg, &trgm_io_config);
-    trgm_output_t trgm_io_config2 = {0};
-    trgm_io_config2.invert = 0;
-    trgm_io_config2.type = trgm_output_same_as_input;
-    trgm_io_config2.input = trg_resource->trgmux_in_pos;
-    trgm_output_config(trg_resource->trgm_pos, trg_resource->trgmux_out_pos, &trgm_io_config2);
+    memset(&trgm_io_config, 0, sizeof(trgm_io_config));
+    trgm_io_config.invert = 0;
+    trgm_io_config.type = trgm_output_same_as_input;
+    trgm_io_config.input = trg_resource->trgmux_in_pos;
+    trgm_output_config(trg_resource->trgm_pos, trg_resource->trgmux_out_pos, &trgm_io_config);
+
     if (trg_resource->trgm_ref && trg_resource->trgmux_in_ref && trg_resource->trgmux_out_ref) {
-        trgm_output_t trgm_io_config3 = {0};
-        trgm_io_config3.invert = 0;
-        trgm_io_config3.type = trgm_output_same_as_input;
-        trgm_io_config3.input = trg_resource->trgmux_in_ref;
-        trgm_output_config(trg_resource->trgm_ref, trg_resource->trgmux_out_ref, &trgm_io_config3);
+        memset(&trgm_io_config, 0, sizeof(trgm_io_config));
+        trgm_io_config.invert = 0;
+        trgm_io_config.type = trgm_output_same_as_input;
+        trgm_io_config.input = trg_resource->trgmux_in_ref;
+        trgm_output_config(trg_resource->trgm_ref, trg_resource->trgmux_out_ref, &trgm_io_config);
+
     }
+#ifndef HPM_USE_PWM_OUTPUT_DSHOT
+    memset(&trgm_io_config, 0, sizeof(trgm_io_config));
+    trgm_io_config.invert = 0;
+    trgm_io_config.type = trgm_output_same_as_input;
+    trgm_io_config.input = timerHardware->pwm_out_trgm_src;
+    trgm_output_config(timerHardware->pwm_trgm.trgm, timerHardware->pwm_out_trgm_dst, &trgm_io_config);
+#endif
     dmamux_config(HPM_DMAMUX, \
                   DMA_SOC_CHN_TO_DMAMUX_CHN(timerHardware->dma_pos, ((uint32_t)timerHardware->gptmr_dma_ch_pos)), \
                   trg_resource->dmamux_src_pos, \

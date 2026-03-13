@@ -85,6 +85,9 @@ typedef struct timerHardware_s {
     uint8_t channel_ref;
     ioTag_t cap_pin;
     uint32_t dma_req_cmp_index;
+    uint32_t pwm_out_trgm_src;
+    uint32_t pwm_out_trgm_dst;
+    uint32_t trgm_port_idx;
 #endif
     uint8_t output;
     uint8_t alternateFunction;

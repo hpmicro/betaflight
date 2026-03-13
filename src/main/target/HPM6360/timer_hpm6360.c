@@ -19,8 +19,12 @@ const timerHardware_t fullTimerHardware[FULL_TIMER_CHANNEL_COUNT] = {
     /* PWM1 */
     {
         .tim = HPM_PWM0,
+#ifdef HPM_USE_PWM_OUTPUT_DSHOT
         .tag = TIMER_GET_IO_TAG(PC0),
         .channel = DEF_TIM_CHANNEL(CH_CH0),
+#else
+        .channel = DEF_TIM_CHANNEL(CH_CH8),
+#endif
         .gptmr_clock = clock_gptmr0,
         .gptmr = HPM_GPTMR0,
         .channel_ref = DEF_TIM_CHANNEL(CH_CH4),
@@ -29,6 +33,11 @@ const timerHardware_t fullTimerHardware[FULL_TIMER_CHANNEL_COUNT] = {
         .output = (DEF_TIM_OUTPUT(CH_CH5) | 0),
         .alternateFunction = IOC_PC00_FUNC_CTL_PWM0_P_0,
         .cmp_index = 0,
+#ifndef HPM_USE_PWM_OUTPUT_DSHOT
+        .pwm_out_trgm_src = HPM_TRGM0_INPUT_SRC_PWM0_CH8REF,
+        .pwm_out_trgm_dst = HPM_TRGM0_OUTPUT_SRC_TRGM0_P6,
+        .trgm_port_idx = 6,
+#endif
         /*For dual-direct dshot*/
         .gptmr_io_function = IOC_PB26_FUNC_CTL_TRGM0_P_06,
         DSHOT_DMA_CHANNEL_RESOURCE(XDMA, HDMA, XDMA, 0,0,4)
@@ -37,8 +46,12 @@ const timerHardware_t fullTimerHardware[FULL_TIMER_CHANNEL_COUNT] = {
     },
     {
         .tim = HPM_PWM0,
+#ifdef HPM_USE_PWM_OUTPUT_DSHOT
         .tag = TIMER_GET_IO_TAG(PC1),
         .channel = DEF_TIM_CHANNEL(CH_CH1),
+#else
+        .channel = DEF_TIM_CHANNEL(CH_CH9),
+#endif
         .gptmr_clock = clock_gptmr1,
         .gptmr = HPM_GPTMR1,
         .channel_ref = DEF_TIM_CHANNEL(CH_CH5),
@@ -47,6 +60,11 @@ const timerHardware_t fullTimerHardware[FULL_TIMER_CHANNEL_COUNT] = {
         .output = (DEF_TIM_OUTPUT(CH_CH5) | 0),
         .alternateFunction = IOC_PC01_FUNC_CTL_PWM0_P_1,
         .cmp_index = 2,
+#ifndef HPM_USE_PWM_OUTPUT_DSHOT
+        .pwm_out_trgm_src = HPM_TRGM0_INPUT_SRC_PWM0_CH9REF,
+        .pwm_out_trgm_dst = HPM_TRGM0_OUTPUT_SRC_TRGM0_P10,
+        .trgm_port_idx = 10,
+#endif
         /*For dual-direct dshot*/
         .gptmr_io_function = IOC_PB30_FUNC_CTL_TRGM0_P_10,
         DSHOT_DMA_CHANNEL_RESOURCE(XDMA, HDMA, XDMA, 1,1,5)
@@ -55,8 +73,12 @@ const timerHardware_t fullTimerHardware[FULL_TIMER_CHANNEL_COUNT] = {
     },
     {
         .tim = HPM_PWM0,
+#ifdef HPM_USE_PWM_OUTPUT_DSHOT
         .tag = TIMER_GET_IO_TAG(PC2),
         .channel = DEF_TIM_CHANNEL(CH_CH2),
+#else
+        .channel = DEF_TIM_CHANNEL(CH_CH10),
+#endif
         .gptmr_clock = clock_gptmr2,
         .gptmr = HPM_GPTMR2,
         .channel_ref = DEF_TIM_CHANNEL(CH_CH6),
@@ -65,6 +87,11 @@ const timerHardware_t fullTimerHardware[FULL_TIMER_CHANNEL_COUNT] = {
         .output = (DEF_TIM_OUTPUT(CH_CH5) | 0),
         .alternateFunction = IOC_PC02_FUNC_CTL_PWM0_P_2,
         .cmp_index = 4,
+#ifndef HPM_USE_PWM_OUTPUT_DSHOT
+        .pwm_out_trgm_src = HPM_TRGM0_INPUT_SRC_PWM0_CH10REF,
+        .pwm_out_trgm_dst = HPM_TRGM0_OUTPUT_SRC_TRGM0_P9,
+        .trgm_port_idx = 9,
+#endif
         /*For dual-direct dshot*/
         .gptmr_io_function = IOC_PB30_FUNC_CTL_TRGM0_P_10,
         DSHOT_DMA_CHANNEL_RESOURCE(XDMA, HDMA, XDMA, 2,2,6)
@@ -85,8 +112,12 @@ const timerHardware_t fullTimerHardware[FULL_TIMER_CHANNEL_COUNT] = {
     },
     {
         .tim = HPM_PWM0,
+#ifdef HPM_USE_PWM_OUTPUT_DSHOT
         .tag = TIMER_GET_IO_TAG(PC3),
         .channel = DEF_TIM_CHANNEL(CH_CH3),
+#else
+        .channel = DEF_TIM_CHANNEL(CH_CH11),
+#endif
         .gptmr_clock = clock_gptmr3,
         .gptmr = HPM_GPTMR3,
         .channel_ref = DEF_TIM_CHANNEL(CH_CH7),
@@ -95,6 +126,11 @@ const timerHardware_t fullTimerHardware[FULL_TIMER_CHANNEL_COUNT] = {
         .output = (DEF_TIM_OUTPUT(CH_CH4) | 0),
         .alternateFunction = IOC_PC03_FUNC_CTL_PWM0_P_3,
         .cmp_index = 6,
+#ifndef HPM_USE_PWM_OUTPUT_DSHOT
+        .pwm_out_trgm_src = HPM_TRGM0_INPUT_SRC_PWM0_CH11REF,
+        .pwm_out_trgm_dst = HPM_TRGM0_OUTPUT_SRC_TRGM0_P8,
+        .trgm_port_idx = 8,
+#endif
         /*For dual-direct dshot*/
         .gptmr_io_function = IOC_PB28_FUNC_CTL_TRGM0_P_08,
         DSHOT_DMA_CHANNEL_RESOURCE(XDMA, HDMA, XDMA, 3,3,7)

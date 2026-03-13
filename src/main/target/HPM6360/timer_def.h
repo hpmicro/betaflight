@@ -39,6 +39,8 @@ typedef enum
 #define DEF_TIM_CH__CH_CH7  D(7, 0)
 #define DEF_TIM_CH__CH_CH8  D(8, 0)
 #define DEF_TIM_CH__CH_CH9  D(9, 0)
+#define DEF_TIM_CH__CH_CH10  D(10, 0)
+#define DEF_TIM_CH__CH_CH11  D(11, 0)
 #define DEF_TIM_CH__CH_CH0N D(0, 1)
 #define DEF_TIM_CH__CH_CH1N D(1, 1)
 #define DEF_TIM_CH__CH_CH2N D(2, 1)
@@ -49,6 +51,8 @@ typedef enum
 #define DEF_TIM_CH__CH_CH7N D(7, 1)
 #define DEF_TIM_CH__CH_CH8N D(8, 1)
 #define DEF_TIM_CH__CH_CH9N D(9, 1)
+#define DEF_TIM_CH__CH_CH10N  D(10, 1)
+#define DEF_TIM_CH__CH_CH11N  D(11, 1)
 #define USED_TIMERS  ( BIT(1) | BIT(2) )
 #define HARDWARE_TIMER_DEFINITION_COUNT    2
 
@@ -111,9 +115,10 @@ typedef struct gptmr_input_cap_source {
     uint32_t trgmux_out_ref;
 } gptmr_input_cap_source_t;
 
+
 typedef struct pwm_dshot_trgm_source {
     TRGM_Type *trgm;
-    uint32_t trgm_src;
+    uint32_t trgm_dma_src;
     uint8_t trg_grp;
     uint32_t dmamuxsrc;
 } pwm_dshot_trgm_source_t;
@@ -151,7 +156,7 @@ typedef struct pwm_dshot_trgm_source {
 #define DSHOT_PWM_TRGM_SOURCE(pwm, index, cmp,cmpidx, trg, trgmidx, grp, grpidx) \
 .pwm_trgm = { \
     .trgm = HPM_TRGM ## trgmidx, \
-    .trgm_src = HPM_TRGM ## trgmidx ## _DMA_SRC_ ## PWM ## index ## _CMP ## cmpidx, \
+    .trgm_dma_src = HPM_TRGM ## trgmidx ## _DMA_SRC_ ## PWM ## index ## _CMP ## cmpidx, \
     .trg_grp = TRGM_DMACFG_ ## grpidx, \
     .dmamuxsrc = HPM_DMA_SRC_MOT ## index ## _ ## grpidx, \
 },

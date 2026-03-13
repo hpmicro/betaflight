@@ -126,7 +126,11 @@ static bool dshotPwmEnableMotors(void)
         motorDmaOutput_t *motor = getMotorDmaOutput(i);
         const IO_t motorIO = IOGetByTag(motor->timerHardware->tag);
 #ifdef HPMicro
+#ifdef HPM_USE_PWM_OUTPUT_DSHOT
         IOConfigGPIOAF(motorIO, motor->iocfg, motor->timerHardware->alternateFunction, motor->timerHardware->palternateFunction);
+#else
+        (void)motor;
+#endif
 #else
         IOConfigGPIOAF(motorIO, motor->iocfg, motor->timerHardware->alternateFunction);
 #endif

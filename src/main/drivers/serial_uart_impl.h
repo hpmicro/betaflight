@@ -179,6 +179,11 @@ typedef struct uartPinDef_s {
 #if defined(STM32F7) || defined(STM32H7) || defined(STM32G4) || defined(AT32F43x)
     uint8_t af;
 #endif
+#if defined(HPMicro)
+    uint32_t af;
+    uint32_t baf;
+    uint32_t paf;
+#endif
 } uartPinDef_t;
 
 typedef struct uartHardware_s {

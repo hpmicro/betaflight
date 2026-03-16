@@ -5,7 +5,7 @@ sdk_src(
     config_helper.c 
 )
 
-if("${BOARD}" STREQUAL "hpmpilotbf67")
+if(CHIP_DEF STREQUAL "HPM6750")
     message(STATUS "Selected board: hpmpilotbf67, including HPM6750 target files")
     sdk_inc(HPM6750)
     sdk_src(
@@ -13,7 +13,7 @@ if("${BOARD}" STREQUAL "hpmpilotbf67")
         HPM6750/timer_hpm6750.c
     )
 endif()
-if("${BOARD}" STREQUAL "hpmpilotbf63")
+if(CHIP_DEF STREQUAL "HPM6360")
     message(STATUS "Selected board: hpmpilotbf63, including HPM6360 target files")
     sdk_inc(HPM6360)
     sdk_src(

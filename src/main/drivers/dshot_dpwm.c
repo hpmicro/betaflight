@@ -129,7 +129,7 @@ static bool dshotPwmEnableMotors(void)
 #ifdef HPM_USE_PWM_OUTPUT_DSHOT
         IOConfigGPIOAF(motorIO, motor->iocfg, motor->timerHardware->alternateFunction, motor->timerHardware->palternateFunction);
 #else
-        (void)motor;
+        (void)motorIO;
 #endif
 #else
         IOConfigGPIOAF(motorIO, motor->iocfg, motor->timerHardware->alternateFunction);

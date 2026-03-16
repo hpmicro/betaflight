@@ -161,79 +161,343 @@ const uartHardware_t uartHardware[UARTDEV_COUNT] = {
 #define UART1_IRQn IRQn_UART0
 #define UART2_IRQn IRQn_UART1
 #define UART3_IRQn IRQn_UART2
+#define UART4_IRQn IRQn_UART3
+#define UART5_IRQn IRQn_UART4
+#define UART6_IRQn IRQn_UART5
+#define UART7_IRQn IRQn_UART6
+#define UART8_IRQn IRQn_UART7
+#define UART1_CLOCK clock_uart0
+#define UART2_CLOCK clock_uart1
+#define UART3_CLOCK clock_uart2
+#define UART4_CLOCK clock_uart3
+#define UART5_CLOCK clock_uart4
+#define UART6_CLOCK clock_uart5
+#define UART7_CLOCK clock_uart6
+#define UART8_CLOCK clock_uart7
 const uartHardware_t uartHardware[UARTDEV_COUNT] = {
 
+#ifdef USE_UART1
     {
     .device = UARTDEV_1,
     .reg = (USART_TypeDef *)HPM_UART0_BASE,
     .rxPins =
     {
         {
+            IO_TAG(PA31),
+            .af = IOC_PA31_FUNC_CTL_UART0_RXD,
+        },
+        {
+            IO_TAG(PB23),
+            .af = IOC_PB23_FUNC_CTL_UART0_RXD,
+        },
+        {
             IO_TAG(PY7),
+            .af = IOC_PY07_FUNC_CTL_UART0_RXD,
+            .paf = PIOC_PY07_FUNC_CTL_SOC_PY_07,
         },
     },
     .txPins =
     {
         {
+            IO_TAG(PA30),
+            .af = IOC_PA30_FUNC_CTL_UART0_TXD,
+        },
+        {
+            IO_TAG(PB22),
+            .af = IOC_PB22_FUNC_CTL_UART0_TXD,
+        },
+        {
             IO_TAG(PY6),
+            .af = IOC_PY06_FUNC_CTL_UART0_TXD,
+            .paf = PIOC_PY06_FUNC_CTL_SOC_PY_06,
         },
     },
-    .af = IOC_PY07_FUNC_CTL_UART0_RXD,
-    .pioc_func = PIOC_PY07_FUNC_CTL_SOC_PY_07,
-    .rcc = clock_uart0,
-    .irqn = IRQn_UART0,
+    .rcc = UART1_CLOCK,
+    .irqn = UART1_IRQn,
     .txBuffer = uart1TxBuffer,
     .rxBuffer = uart1RxBuffer,
     .txBufferSize = sizeof(uart1TxBuffer),
     .rxBufferSize = sizeof(uart1RxBuffer),
     },
+#endif
+#ifdef USE_UART2
     {
     .device = UARTDEV_2,
     .reg = (USART_TypeDef *)HPM_UART1_BASE,
     .rxPins =
     {
         {
-            IO_TAG(PC25),
+            IO_TAG(PA1),
+            .af = IOC_PA01_FUNC_CTL_UART1_RXD,
+        },
+        {
+            IO_TAG(PB1),
+            .af = IOC_PB01_FUNC_CTL_UART1_RXD,
+        },
+        {
+            IO_TAG(PB25),
+            .af = IOC_PB25_FUNC_CTL_UART1_RXD,
         },
     },
     .txPins =
     {
         {
-            IO_TAG(PC24),
+            IO_TAG(PA0),
+            .af = IOC_PA00_FUNC_CTL_UART1_TXD,
+        },
+        {
+            IO_TAG(PB0),
+            .af = IOC_PB00_FUNC_CTL_UART1_TXD,
+        },
+        {
+            IO_TAG(PB24),
+            .af = IOC_PB24_FUNC_CTL_UART1_TXD,
         },
     },
-    .af = IOC_PC25_FUNC_CTL_UART1_RXD,
-    .rcc = clock_uart1,
-    .irqn = IRQn_UART1,
+    .rcc = UART2_CLOCK,
+    .irqn = UART2_IRQn,
     .txBuffer = uart2TxBuffer,
     .rxBuffer = uart2RxBuffer,
     .txBufferSize = sizeof(uart2TxBuffer),
     .rxBufferSize = sizeof(uart2RxBuffer),
     },
+#endif
+#ifdef USE_UART3
     {
     .device = UARTDEV_3,
     .reg = (USART_TypeDef *)HPM_UART2_BASE,
     .rxPins =
     {
         {
-            IO_TAG(PC27),
+            IO_TAG(PA3),
+            .af = IOC_PA03_FUNC_CTL_UART2_RXD,
+        },
+        {
+            IO_TAG(PB27),
+            .af = IOC_PB27_FUNC_CTL_UART2_RXD,
         },
     },
     .txPins =
     {
         {
-            IO_TAG(PC26),
+            IO_TAG(PA2),
+            .af = IOC_PA02_FUNC_CTL_UART2_TXD,
+        },
+        {
+            IO_TAG(PB26),
+            .af = IOC_PB26_FUNC_CTL_UART2_TXD,
         },
     },
-    .af = IOC_PC27_FUNC_CTL_UART2_RXD,
-    .rcc = clock_uart2,
-    .irqn = IRQn_UART2,
+    .rcc = UART3_CLOCK,
+    .irqn = UART3_IRQn,
     .txBuffer = uart3TxBuffer,
     .rxBuffer = uart3RxBuffer,
     .txBufferSize = sizeof(uart3TxBuffer),
     .rxBufferSize = sizeof(uart3RxBuffer),
     },
-
+#endif
+#ifdef USE_UART4
+    {
+    .device = UARTDEV_4,
+    .reg = (USART_TypeDef *)HPM_UART3_BASE,
+    .rxPins =
+    {
+        {
+            IO_TAG(PA5),
+            .af = IOC_PA05_FUNC_CTL_UART3_RXD,
+        },
+        {
+            IO_TAG(PB29),
+            .af = IOC_PB29_FUNC_CTL_UART3_RXD,
+        },
+        {
+            IO_TAG(PZ1),
+            .af = IOC_PZ01_FUNC_CTL_UART3_RXD,
+            .baf = BIOC_PZ01_FUNC_CTL_SOC_PZ_01,
+        },
+    },
+    .txPins =
+    {
+        {
+            IO_TAG(PA4),
+            .af = IOC_PA04_FUNC_CTL_UART3_TXD,
+        },
+        {
+            IO_TAG(PB28),
+            .af = IOC_PB28_FUNC_CTL_UART3_TXD,
+        },
+        {
+            IO_TAG(PZ0),
+            .af = IOC_PZ00_FUNC_CTL_UART3_TXD,
+            .baf = BIOC_PZ00_FUNC_CTL_SOC_PZ_00,
+        },
+    },
+    .rcc = UART4_CLOCK,
+    .irqn = UART4_IRQn,
+    .txBuffer = uart4TxBuffer,
+    .rxBuffer = uart4RxBuffer,
+    .txBufferSize = sizeof(uart4TxBuffer),
+    .rxBufferSize = sizeof(uart4RxBuffer),
+    },
+#endif
+#ifdef USE_UART5
+    {
+    .device = UARTDEV_5,
+    .reg = (USART_TypeDef *)HPM_UART4_BASE,
+    .rxPins =
+    {
+        {
+            IO_TAG(PC7),
+            .af = IOC_PC07_FUNC_CTL_UART4_RXD,
+        },
+        {
+            IO_TAG(PZ3),
+            .af = IOC_PZ03_FUNC_CTL_UART4_RXD,
+            .baf = BIOC_PZ03_FUNC_CTL_SOC_PZ_03,
+        },
+    },
+    .txPins =
+    {
+        {
+            IO_TAG(PC6),
+            .af = IOC_PC06_FUNC_CTL_UART4_TXD,   
+        },
+        {
+            IO_TAG(PZ2),
+            .af = IOC_PZ02_FUNC_CTL_UART4_TXD,
+            .baf = BIOC_PZ02_FUNC_CTL_SOC_PZ_02,
+        },
+    },
+    .rcc = UART5_CLOCK,
+    .irqn = UART5_IRQn,
+    .txBuffer = uart5TxBuffer,
+    .rxBuffer = uart5RxBuffer,
+    .txBufferSize = sizeof(uart5TxBuffer),
+    .rxBufferSize = sizeof(uart5RxBuffer),
+    },
+#endif
+#ifdef USE_UART6
+    {
+    .device = UARTDEV_6,
+    .reg = (USART_TypeDef *)HPM_UART5_BASE,
+    .rxPins =
+    {
+        {
+            IO_TAG(PC9),
+            .af = IOC_PC09_FUNC_CTL_UART5_RXD,
+        },  
+        {
+            IO_TAG(PA17),
+            .af = IOC_PA17_FUNC_CTL_UART5_RXD,
+        },
+    },
+    .txPins =
+    {
+        {
+            IO_TAG(PC8),
+            .af = IOC_PC08_FUNC_CTL_UART5_TXD,   
+        },
+        {
+            IO_TAG(PA16),
+            .af = IOC_PA16_FUNC_CTL_UART5_TXD,  
+        },
+    },
+    .rcc = UART6_CLOCK,
+    .irqn = UART6_IRQn,
+    .txBuffer = uart6TxBuffer,
+    .rxBuffer = uart6RxBuffer,
+    .txBufferSize = sizeof(uart6TxBuffer),
+    .rxBufferSize = sizeof(uart6RxBuffer),
+    },
+#endif
+#ifdef USE_UART7
+    {
+    .device = UARTDEV_7,
+    .reg = (USART_TypeDef *)HPM_UART6_BASE,
+    .rxPins =
+    {
+        {
+            IO_TAG(PA19),
+            .af = IOC_PA19_FUNC_CTL_UART6_RXD,
+        },  
+        {
+            IO_TAG(PB11),
+            .af = IOC_PB11_FUNC_CTL_UART6_RXD,
+        },
+        {   
+            IO_TAG(PC11),
+            .af = IOC_PC11_FUNC_CTL_UART6_RXD,
+        },
+    },
+    .txPins =
+    {
+        {
+            IO_TAG(PA18),
+            .af = IOC_PA18_FUNC_CTL_UART6_TXD,
+        },
+        {   
+            IO_TAG(PC10),
+            .af = IOC_PC10_FUNC_CTL_UART6_TXD,
+        },
+    },
+    .rcc = UART7_CLOCK,
+    .irqn = UART7_IRQn,
+    .txBuffer = uart7TxBuffer,
+    .rxBuffer = uart7RxBuffer,
+    .txBufferSize = sizeof(uart7TxBuffer),
+    .rxBufferSize = sizeof(uart7RxBuffer),
+    },
+#endif
+#ifdef USE_UART8
+    {
+    .device = UARTDEV_8,
+    .reg = (USART_TypeDef *)HPM_UART7_BASE,
+    .rxPins =
+    {
+        {
+            IO_TAG(PA21),
+            .af = IOC_PA21_FUNC_CTL_UART7_RXD,
+        },  
+        {
+            IO_TAG(PB13),
+            .af = IOC_PB13_FUNC_CTL_UART7_RXD,
+        },
+        {   
+            IO_TAG(PC13),
+            .af = IOC_PC13_FUNC_CTL_UART7_RXD,
+        },
+        {   
+            IO_TAG(PY5),
+            .af = IOC_PY05_FUNC_CTL_UART7_RXD,
+        },
+    },
+    .txPins =
+    {
+        {
+            IO_TAG(PA20),
+            .af = IOC_PA20_FUNC_CTL_UART7_TXD,
+        },  
+        {
+            IO_TAG(PB12),
+            .af = IOC_PB12_FUNC_CTL_UART7_TXD,
+        },
+        {   
+            IO_TAG(PC12),
+            .af = IOC_PC12_FUNC_CTL_UART7_TXD,
+        },
+        {       
+            IO_TAG(PY4),
+            .af = IOC_PY04_FUNC_CTL_UART7_TXD,
+        },
+    },
+    .rcc = UART8_CLOCK,
+    .irqn = UART8_IRQn,
+    .txBuffer = uart8TxBuffer,
+    .rxBuffer = uart8RxBuffer,
+    .txBufferSize = sizeof(uart8TxBuffer),
+    .rxBufferSize = sizeof(uart8RxBuffer),
+    }
+#endif
 };
 #endif
 
@@ -397,5 +661,4 @@ SDK_DECLARE_EXT_ISR_M(UART9_IRQn, uart_isr8)
 void uartTryStartTxDMA(uartPort_t *s) { (void)s; }
 
 #endif
-
 #endif // USE_UART

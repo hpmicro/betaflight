@@ -39,7 +39,7 @@ typedef struct dmaPeripheralMapping_s {
 
 static const dmaPeripheralMapping_t dmaPeripheralMapping[] = {
 #ifdef USE_SPI
-
+#ifdef HPM6750
     { DMA_PERIPH_SPI_SDO,  SPIDEV_1,  { DMA(1, HPM_HDMA_Channel4, 4), DMA(2, HPM_HDMA_Channel5, 5), DMA(3, HPM_HDMA_Channel6, 6), DMA(4, HPM_HDMA_Channel7, 7) }, HPM_DMA_SRC_SPI0_TX, },
     { DMA_PERIPH_SPI_SDI,  SPIDEV_1,  { DMA(1, HPM_HDMA_Channel4, 4), DMA(2, HPM_HDMA_Channel5, 5), DMA(3, HPM_HDMA_Channel6, 6), DMA(4, HPM_HDMA_Channel7, 7) }, HPM_DMA_SRC_SPI0_RX, },
     { DMA_PERIPH_SPI_SDO,  SPIDEV_2,  { DMA(1, HPM_HDMA_Channel4, 4), DMA(2, HPM_HDMA_Channel5, 5), DMA(3, HPM_HDMA_Channel6, 6), DMA(4, HPM_HDMA_Channel7, 7) }, HPM_DMA_SRC_SPI1_TX, },
@@ -48,6 +48,18 @@ static const dmaPeripheralMapping_t dmaPeripheralMapping[] = {
     { DMA_PERIPH_SPI_SDI,  SPIDEV_3,  { DMA(1, HPM_HDMA_Channel4, 4), DMA(2, HPM_HDMA_Channel5, 5), DMA(3, HPM_HDMA_Channel6, 6), DMA(4, HPM_HDMA_Channel7, 7) }, HPM_DMA_SRC_SPI2_RX, },
     { DMA_PERIPH_SPI_SDO,  SPIDEV_4,  { DMA(1, HPM_HDMA_Channel4, 4), DMA(2, HPM_HDMA_Channel5, 5), DMA(3, HPM_HDMA_Channel6, 6), DMA(4, HPM_HDMA_Channel7, 7) }, HPM_DMA_SRC_SPI3_TX, },
     { DMA_PERIPH_SPI_SDI,  SPIDEV_4,  { DMA(1, HPM_HDMA_Channel4, 4), DMA(2, HPM_HDMA_Channel5, 5), DMA(3, HPM_HDMA_Channel6, 6), DMA(4, HPM_HDMA_Channel7, 7) }, HPM_DMA_SRC_SPI3_RX, },
+#endif
+#ifdef HPM6360
+    { DMA_PERIPH_SPI_SDO,  SPIDEV_1,  { DMA(1, HPM_HDMA_Channel5, 5), DMA(2, HPM_HDMA_Channel6, 6), DMA(3, HPM_HDMA_Channel7, 7) }, HPM_DMA_SRC_SPI0_TX, },
+    { DMA_PERIPH_SPI_SDI,  SPIDEV_1,  { DMA(1, HPM_HDMA_Channel0, 0), }, HPM_DMA_SRC_SPI0_RX, },
+    { DMA_PERIPH_SPI_SDO,  SPIDEV_2,  { DMA(1, HPM_HDMA_Channel5, 5), DMA(2, HPM_HDMA_Channel6, 6), DMA(3, HPM_HDMA_Channel7, 7) }, HPM_DMA_SRC_SPI1_TX, },
+    { DMA_PERIPH_SPI_SDO,  SPIDEV_2,  { DMA(1, HPM_HDMA_Channel5, 5), DMA(2, HPM_HDMA_Channel6, 6), DMA(3, HPM_HDMA_Channel7, 7) }, HPM_DMA_SRC_SPI1_TX, },
+    { DMA_PERIPH_SPI_SDI,  SPIDEV_2,  { DMA(1, HPM_HDMA_Channel5, 5), DMA(2, HPM_HDMA_Channel6, 6), DMA(3, HPM_HDMA_Channel7, 7) }, HPM_DMA_SRC_SPI1_RX, },
+    { DMA_PERIPH_SPI_SDO,  SPIDEV_3,  { DMA(1, HPM_HDMA_Channel5, 5), DMA(2, HPM_HDMA_Channel6, 6), DMA(3, HPM_HDMA_Channel7, 7) }, HPM_DMA_SRC_SPI2_TX, },
+    { DMA_PERIPH_SPI_SDI,  SPIDEV_3,  { DMA(1, HPM_HDMA_Channel5, 5), DMA(2, HPM_HDMA_Channel6, 6), DMA(3, HPM_HDMA_Channel7, 7) }, HPM_DMA_SRC_SPI2_RX, },
+    { DMA_PERIPH_SPI_SDO,  SPIDEV_4,  { DMA(1, HPM_HDMA_Channel5, 5), DMA(2, HPM_HDMA_Channel6, 6), DMA(3, HPM_HDMA_Channel7, 7) }, HPM_DMA_SRC_SPI3_TX, },
+    { DMA_PERIPH_SPI_SDI,  SPIDEV_4,  { DMA(1, HPM_HDMA_Channel5, 5), DMA(2, HPM_HDMA_Channel6, 6), DMA(3, HPM_HDMA_Channel7, 7) }, HPM_DMA_SRC_SPI3_RX, },
+#endif
 #endif // USE_SPI
 };
 #undef DMA

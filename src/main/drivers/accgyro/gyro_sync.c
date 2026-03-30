@@ -88,6 +88,13 @@ uint16_t gyroSetSampleRate(gyroDev_t *gyro)
             gyroSampleRateHz = 6664;   // Yes, this is correct per the datasheet. Will effectively round to 150us and 6.67KHz.
             accSampleRateHz = 833;
             break;
+#endif          
+#ifdef USE_GYRO_SPI_MIC6200
+        case MIC6200_SPI:
+            gyro->gyroRateKHz = GYRO_RATE_1_kHz;
+            gyroSampleRateHz = 1000;   // Yes, this is correct per the datasheet. Will effectively round to 150us and 6.67KHz.
+            accSampleRateHz = 250;
+            break;
 #endif
         default:
             gyro->gyroRateKHz = GYRO_RATE_8_kHz;

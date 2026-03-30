@@ -20,25 +20,7 @@
 
 #pragma once
 
-#include "pg/pg.h"
+#include "drivers/io_types.h"
 
-#ifdef STM32F411xE
-// Allow RX and OSD tasks to be scheduled at the second attempt on F411 processors
-#define SCHEDULER_RELAX_RX  1
-#define SCHEDULER_RELAX_OSD 1
-#else
-#define SCHEDULER_RELAX_RX  25
-#define SCHEDULER_RELAX_OSD 25
-#endif
-
-// Tenths of a % of tasks late
-#define CPU_LOAD_LATE_LIMIT 30
-
-typedef struct schedulerConfig_s {
-    uint16_t rxRelaxDeterminism;
-    uint16_t osdRelaxDeterminism;
-    uint16_t cpuLatePercentageLimit;
-} schedulerConfig_t;
-
-PG_DECLARE(schedulerConfig_t, schedulerConfig);
+bool mmc5983Detect(magDev_t *magDev);
 

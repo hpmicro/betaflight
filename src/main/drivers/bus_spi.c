@@ -285,6 +285,27 @@ void spiWriteReg(const extDevice_t *dev, uint8_t reg, uint8_t data)
 #endif
 }
 
+#ifdef USE_GYRO_SPI_MIC6200
+void spiWriteRegMic6200(const extDevice_t *dev, uint8_t reg, uint8_t data)
+{
+    // This routine blocks so no need to use static data
+#ifdef HPMicro
+    uint8_t tmp[3] = {reg & 0x7F, reg & 0x80, data};
+    busDevice_t *bus = dev->bus;
+    SPI_TypeDef *instance = bus->busType_u.spi.instance;
+    IOLo(dev->busType_u.spi.csnPin);
+    uint32_t state;
+    state = hpm_spi_transmit_blocking(instance, (uint8_t *)&tmp, 3, 0xFFFFFFFF);
+    if (state != status_success) {
+        //while (1);
+    }
+    IOHi(dev->busType_u.spi.csnPin);
+#else
+#error "Not Supported"
+#endif
+}
+#endif
+
 // Write data to a register, returning false if the bus is busy
 bool spiWriteRegRB(const extDevice_t *dev, uint8_t reg, uint8_t data)
 {
@@ -379,6 +400,28 @@ uint8_t spiReadReg(const extDevice_t *dev, uint8_t reg)
     return data;
 #endif
 }
+
+#ifdef USE_GYRO_SPI_MIC6200
+uint8_t spiReadRegMic6200(const extDevice_t *dev, uint8_t reg)
+{
+#ifdef HPMicro
+    uint8_t data[3] = { 0 };
+    uint8_t regs[3] = { reg | 0x80, reg & 0x80};
+    IOLo(dev->busType_u.spi.csnPin);
+    busDevice_t *bus = dev->bus;
+    SPI_TypeDef *instance = bus->busType_u.spi.instance;
+    
+    if (hpm_spi_transmit_receive_blocking(instance, (uint8_t *)&regs, (uint8_t *)&data[0], 3, 0xFFFFFFFF) != status_success) {
+        //printf("hpm_spi_transmit_receive_blocking fail\n");
+        //while (1);
+    }
+    IOHi(dev->busType_u.spi.csnPin);
+    return data[2];
+#else
+#error "Not Supported"
+#endif
+}
+#endif
 
 // Wait for bus to become free, then read a byte of data where the register is ORed with 0x80
 uint8_t spiReadRegMsk(const extDevice_t *dev, uint8_t reg)
@@ -537,7 +580,7 @@ FAST_IRQ_HANDLER static void spiRxIrqHandler(dmaChannelDescriptor_t* descriptor)
         return;
     }
 #ifdef HPMicro
-    uint32_t ch = (uint32_t)(dev->bus->dmaRx->ref) & 0xF;
+    uint32_t ch = (uint32_t)(dev->bus->dmaTx->ref) & 0xF;
     if (descriptor->int_stat & (1 << (DMA_STATUS_TC_SHIFT + ch))) {
 
     } else {
@@ -750,7 +793,8 @@ void spiInitBusDMA(void)
              * handlers, so the DMA completion interrupt must be at a higher priority
              */
 #ifdef HPMicro
-            dmaSetHandler(dmaRxIdentifier, spiRxIrqHandler, 0, 0);
+            //dmaSetHandler(dmaRxIdentifier, spiRxIrqHandler, 0, 0);
+            dmaSetHandler(dmaTxIdentifier, spiRxIrqHandler, 7, 0);
 #else
             dmaSetHandler(dmaRxIdentifier, spiRxIrqHandler, NVIC_PRIO_SPI_DMA, 0);
 #endif

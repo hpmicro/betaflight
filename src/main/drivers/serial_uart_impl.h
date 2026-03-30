@@ -255,6 +255,14 @@ typedef struct uartDevice_s {
 #if !defined(STM32F4) // Don't support pin swap.
     bool pinSwap;
 #endif
+#if defined(HPMicro)
+    uint32_t rx_af;
+    uint32_t rx_baf;
+    uint32_t rx_paf;
+    uint32_t tx_af;
+    uint32_t tx_baf;
+    uint32_t tx_paf;
+#endif
     txPinState_t txPinState;
 } uartDevice_t;
 

@@ -25,6 +25,9 @@ void init_uart_pins(UART_Type *ptr)
     } else if (ptr == HPM_UART1) {
         HPM_IOC->PAD[IOC_PAD_PC24].FUNC_CTL = IOC_PC24_FUNC_CTL_UART1_TXD;
         HPM_IOC->PAD[IOC_PAD_PC25].FUNC_CTL = IOC_PC25_FUNC_CTL_UART1_RXD;
+    } else if (ptr == HPM_UART6) {
+        HPM_IOC->PAD[IOC_PAD_PC10].FUNC_CTL = IOC_PC10_FUNC_CTL_UART6_TXD;
+        HPM_IOC->PAD[IOC_PAD_PC11].FUNC_CTL = IOC_PC11_FUNC_CTL_UART6_RXD;
     } else if (ptr == HPM_UART2) {
         HPM_IOC->PAD[IOC_PAD_PC26].FUNC_CTL = IOC_PC26_FUNC_CTL_UART2_TXD;
         HPM_IOC->PAD[IOC_PAD_PC27].FUNC_CTL = IOC_PC27_FUNC_CTL_UART2_RXD;
@@ -50,8 +53,18 @@ void init_i2c_pins_as_gpio(I2C_Type *ptr)
 {
     if (ptr == HPM_I2C0) {
         /* I2C0 */
-        HPM_IOC->PAD[IOC_PAD_PC13].FUNC_CTL = IOC_PC13_FUNC_CTL_GPIO_C_13;
-        HPM_IOC->PAD[IOC_PAD_PC14].FUNC_CTL = IOC_PC14_FUNC_CTL_GPIO_C_14;
+        HPM_IOC->PAD[IOC_PAD_PA23].FUNC_CTL = IOC_PA23_FUNC_CTL_GPIO_A_23;
+        HPM_IOC->PAD[IOC_PAD_PA24].FUNC_CTL = IOC_PA24_FUNC_CTL_GPIO_A_24;
+    } else if (ptr == HPM_I2C1) {
+        /* I2C1 */
+        HPM_IOC->PAD[IOC_PAD_PA25].FUNC_CTL = IOC_PA25_FUNC_CTL_GPIO_A_25;
+        HPM_IOC->PAD[IOC_PAD_PA26].FUNC_CTL = IOC_PA26_FUNC_CTL_GPIO_A_26;
+    } else if (ptr == HPM_I2C2) {
+        /* I2C2 */
+        HPM_IOC->PAD[IOC_PAD_PZ02].FUNC_CTL = IOC_PZ02_FUNC_CTL_GPIO_Z_02;
+        HPM_IOC->PAD[IOC_PAD_PZ03].FUNC_CTL = IOC_PZ03_FUNC_CTL_GPIO_Z_03;
+        HPM_BIOC->PAD[IOC_PAD_PZ02].FUNC_CTL = BIOC_PZ02_FUNC_CTL_SOC_PZ_02;
+        HPM_BIOC->PAD[IOC_PAD_PZ03].FUNC_CTL = BIOC_PZ03_FUNC_CTL_SOC_PZ_03;
     } else {
         while (1) {
         }
@@ -61,19 +74,28 @@ void init_i2c_pins_as_gpio(I2C_Type *ptr)
 void init_i2c_pins(I2C_Type *ptr)
 {
     if (ptr == HPM_I2C0) {
-        HPM_IOC->PAD[IOC_PAD_PC13].FUNC_CTL = IOC_PC13_FUNC_CTL_I2C0_SCL
+        HPM_IOC->PAD[IOC_PAD_PA23].FUNC_CTL = IOC_PA23_FUNC_CTL_I2C0_SCL
                                             | IOC_PAD_FUNC_CTL_LOOP_BACK_MASK;
-        HPM_IOC->PAD[IOC_PAD_PC14].FUNC_CTL = IOC_PC14_FUNC_CTL_I2C0_SDA
+        HPM_IOC->PAD[IOC_PAD_PA24].FUNC_CTL = IOC_PA24_FUNC_CTL_I2C0_SDA
                                             | IOC_PAD_FUNC_CTL_LOOP_BACK_MASK;
         HPM_IOC->PAD[IOC_PAD_PC13].PAD_CTL = IOC_PAD_PAD_CTL_OD_SET(1) | IOC_PAD_PAD_CTL_PE_SET(1) | IOC_PAD_PAD_CTL_PS_SET(1);
         HPM_IOC->PAD[IOC_PAD_PC14].PAD_CTL = IOC_PAD_PAD_CTL_OD_SET(1) | IOC_PAD_PAD_CTL_PE_SET(1) | IOC_PAD_PAD_CTL_PS_SET(1);
-    } else if (ptr == HPM_I2C3) {
-        HPM_IOC->PAD[IOC_PAD_PC11].FUNC_CTL = IOC_PC11_FUNC_CTL_I2C3_SCL
+    } else if (ptr == HPM_I2C1) {
+        HPM_IOC->PAD[IOC_PAD_PA25].FUNC_CTL = IOC_PA25_FUNC_CTL_I2C1_SCL
                                             | IOC_PAD_FUNC_CTL_LOOP_BACK_MASK;
-        HPM_IOC->PAD[IOC_PAD_PC12].FUNC_CTL = IOC_PC12_FUNC_CTL_I2C3_SDA
+        HPM_IOC->PAD[IOC_PAD_PA26].FUNC_CTL = IOC_PA26_FUNC_CTL_I2C1_SDA
                                             | IOC_PAD_FUNC_CTL_LOOP_BACK_MASK;
-        HPM_IOC->PAD[IOC_PAD_PC11].PAD_CTL = IOC_PAD_PAD_CTL_OD_SET(1) | IOC_PAD_PAD_CTL_PE_SET(1) | IOC_PAD_PAD_CTL_PS_SET(1);
-        HPM_IOC->PAD[IOC_PAD_PC12].PAD_CTL = IOC_PAD_PAD_CTL_OD_SET(1) | IOC_PAD_PAD_CTL_PE_SET(1) | IOC_PAD_PAD_CTL_PS_SET(1);
+        HPM_IOC->PAD[IOC_PAD_PA25].PAD_CTL = IOC_PAD_PAD_CTL_OD_SET(1) | IOC_PAD_PAD_CTL_PE_SET(1) | IOC_PAD_PAD_CTL_PS_SET(1);
+        HPM_IOC->PAD[IOC_PAD_PA26].PAD_CTL = IOC_PAD_PAD_CTL_OD_SET(1) | IOC_PAD_PAD_CTL_PE_SET(1) | IOC_PAD_PAD_CTL_PS_SET(1);
+    } else if (ptr == HPM_I2C2) {
+        HPM_IOC->PAD[IOC_PAD_PZ02].FUNC_CTL = IOC_PZ02_FUNC_CTL_I2C2_SCL
+                                            | IOC_PAD_FUNC_CTL_LOOP_BACK_MASK;
+        HPM_IOC->PAD[IOC_PAD_PZ03].FUNC_CTL = IOC_PZ03_FUNC_CTL_I2C2_SDA
+                                            | IOC_PAD_FUNC_CTL_LOOP_BACK_MASK;
+        HPM_IOC->PAD[IOC_PAD_PZ02].PAD_CTL = IOC_PAD_PAD_CTL_OD_SET(1) | IOC_PAD_PAD_CTL_PE_SET(1) | IOC_PAD_PAD_CTL_PS_SET(1);
+        HPM_IOC->PAD[IOC_PAD_PZ03].PAD_CTL = IOC_PAD_PAD_CTL_OD_SET(1) | IOC_PAD_PAD_CTL_PE_SET(1) | IOC_PAD_PAD_CTL_PS_SET(1);
+        HPM_BIOC->PAD[IOC_PAD_PZ02].FUNC_CTL = BIOC_PZ02_FUNC_CTL_SOC_PZ_02;
+        HPM_BIOC->PAD[IOC_PAD_PZ03].FUNC_CTL = BIOC_PZ03_FUNC_CTL_SOC_PZ_03;
     } else {
         while (1) {
         }
@@ -295,25 +317,26 @@ void init_sdxc_cmd_pin(SDXC_Type *ptr, bool open_drain, bool is_1v8)
 {
     (void) is_1v8;
     if (ptr == HPM_SDXC0) {
-        uint32_t cmd_func_ctl = IOC_PA10_FUNC_CTL_SDC0_CMD | IOC_PAD_FUNC_CTL_LOOP_BACK_SET(1);
+        uint32_t cmd_func_ctl = IOC_PA03_FUNC_CTL_SDC0_CMD | IOC_PAD_FUNC_CTL_LOOP_BACK_SET(1);
         uint32_t cmd_pad_ctl = IOC_PAD_PAD_CTL_DS_SET(7) | IOC_PAD_PAD_CTL_PE_SET(1) | IOC_PAD_PAD_CTL_PS_SET(1);
         if (open_drain) {
             cmd_pad_ctl |= IOC_PAD_PAD_CTL_OD_MASK;
         }
         /* SDXC0.CMD */
-        HPM_IOC->PAD[IOC_PAD_PA10].FUNC_CTL = cmd_func_ctl;
-        HPM_IOC->PAD[IOC_PAD_PA10].PAD_CTL = cmd_pad_ctl;
+        HPM_IOC->PAD[IOC_PAD_PA03].FUNC_CTL = cmd_func_ctl;
+        HPM_IOC->PAD[IOC_PAD_PA03].PAD_CTL = cmd_pad_ctl;
     }
 }
 
 void init_sdxc_cd_pin(SDXC_Type  *ptr, bool as_gpio)
 {
     if (ptr == HPM_SDXC0) {
-        uint32_t cd_func_alt = as_gpio ?  IOC_PA14_FUNC_CTL_GPIO_A_14 : IOC_PA14_FUNC_CTL_SDC0_CDN;
+        while(!as_gpio);
         uint32_t cd_pad_ctl = IOC_PAD_PAD_CTL_DS_SET(7) | IOC_PAD_PAD_CTL_PE_SET(1) | IOC_PAD_PAD_CTL_PS_SET(1);
         /* SDXC0.CD */
-        HPM_IOC->PAD[IOC_PAD_PA14].FUNC_CTL = cd_func_alt;
-        HPM_IOC->PAD[IOC_PAD_PA14].PAD_CTL = cd_pad_ctl;
+        HPM_IOC->PAD[IOC_PAD_PY05].FUNC_CTL = IOC_PY05_FUNC_CTL_GPIO_Y_05;
+        HPM_IOC->PAD[IOC_PAD_PY05].PAD_CTL = cd_pad_ctl;
+        HPM_PIOC->PAD[IOC_PAD_PY05].FUNC_CTL = PIOC_PY05_FUNC_CTL_SOC_PY_05;
     }
 }
 
@@ -326,23 +349,23 @@ void init_sdxc_clk_data_pins(SDXC_Type *ptr, uint32_t width, bool is_1v8)
         uint32_t pad_ctl = IOC_PAD_PAD_CTL_DS_SET(7) | IOC_PAD_PAD_CTL_PE_SET(1) | IOC_PAD_PAD_CTL_PS_SET(1);
 
         /* SDXC0.CLK */
-        HPM_IOC->PAD[IOC_PAD_PA11].FUNC_CTL = func_ctl;
-        HPM_IOC->PAD[IOC_PAD_PA11].PAD_CTL = clk_pad_ctl;
+        HPM_IOC->PAD[IOC_PAD_PA02].FUNC_CTL = func_ctl;
+        HPM_IOC->PAD[IOC_PAD_PA02].PAD_CTL = clk_pad_ctl;
 
         /* SDXC0.DATA0 */
-        HPM_IOC->PAD[IOC_PAD_PA12].FUNC_CTL = func_ctl;
-        HPM_IOC->PAD[IOC_PAD_PA12].PAD_CTL = pad_ctl;
+        HPM_IOC->PAD[IOC_PAD_PA01].FUNC_CTL = func_ctl;
+        HPM_IOC->PAD[IOC_PAD_PA01].PAD_CTL = pad_ctl;
 
         if (width == 4) {
             /* SDXC0.DATA1 */
-            HPM_IOC->PAD[IOC_PAD_PA13].FUNC_CTL = func_ctl;
-            HPM_IOC->PAD[IOC_PAD_PA13].PAD_CTL = pad_ctl;
+            HPM_IOC->PAD[IOC_PAD_PA00].FUNC_CTL = func_ctl;
+            HPM_IOC->PAD[IOC_PAD_PA00].PAD_CTL = pad_ctl;
             /* SDXC0.DATA2 */
-            HPM_IOC->PAD[IOC_PAD_PA08].FUNC_CTL = func_ctl;
-            HPM_IOC->PAD[IOC_PAD_PA08].PAD_CTL = pad_ctl;
+            HPM_IOC->PAD[IOC_PAD_PA05].FUNC_CTL = func_ctl;
+            HPM_IOC->PAD[IOC_PAD_PA05].PAD_CTL = pad_ctl;
             /* SDXC0.DATA3 */
-            HPM_IOC->PAD[IOC_PAD_PA09].FUNC_CTL = func_ctl;
-            HPM_IOC->PAD[IOC_PAD_PA09].PAD_CTL = pad_ctl;
+            HPM_IOC->PAD[IOC_PAD_PA04].FUNC_CTL = func_ctl;
+            HPM_IOC->PAD[IOC_PAD_PA04].PAD_CTL = pad_ctl;
         }
     }
 }

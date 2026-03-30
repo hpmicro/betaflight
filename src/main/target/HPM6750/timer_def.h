@@ -113,7 +113,7 @@ typedef struct gptmr_input_cap_source {
 
 typedef struct pwm_dshot_trgm_source {
     TRGM_Type *trgm;
-    uint32_t trgm_src;
+    uint32_t trgm_dma_src;
     uint8_t trg_grp;
     uint32_t dmamuxsrc;
 } pwm_dshot_trgm_source_t;
@@ -151,7 +151,7 @@ typedef struct pwm_dshot_trgm_source {
 #define DSHOT_PWM_TRGM_SOURCE(pwm, index, cmp,cmpidx, trg, trgmidx, grp, grpidx) \
 .pwm_trgm = { \
     .trgm = HPM_TRGM ## trgmidx, \
-    .trgm_src = HPM_TRGM ## trgmidx ## _DMA_SRC_ ## PWM ## index ## _CMP ## cmpidx, \
+    .trgm_dma_src = HPM_TRGM ## trgmidx ## _DMA_SRC_ ## PWM ## index ## _CMP ## cmpidx, \
     .trg_grp = TRGM_DMACFG_ ## grpidx, \
     .dmamuxsrc = HPM_DMA_SRC_MOT ## index ## _ ## grpidx, \
 },

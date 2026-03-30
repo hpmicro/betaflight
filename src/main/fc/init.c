@@ -338,14 +338,6 @@ void init(void)
             failureMode(FAILURE_SDCARD_INITIALISATION_FAILED);
         }
     }
-        afatfs_poll();
-        afatfs_poll();
-        afatfs_poll();
-        afatfs_poll();
-        afatfs_poll();
-        afatfs_poll();
-        afatfs_poll();
-        afatfs_poll();
 #endif // CONFIG_IN_SDCARD
 
 #if defined(CONFIG_IN_EXTERNAL_FLASH) || defined(CONFIG_IN_MEMORY_MAPPED_FLASH)
@@ -824,6 +816,17 @@ void init(void)
     if (sdcardConfig()->mode) {
         if (!(initFlags & SD_INIT_ATTEMPTED)) {
             sdCardAndFSInit();
+            if (!sdcard_isInserted()) {
+                failureMode(FAILURE_SDCARD_REQUIRED);
+            }
+
+            while (afatfs_getFilesystemState() != AFATFS_FILESYSTEM_STATE_READY) {
+                afatfs_poll();
+
+                if (afatfs_getFilesystemState() == AFATFS_FILESYSTEM_STATE_FATAL) {
+                    failureMode(FAILURE_SDCARD_INITIALISATION_FAILED);
+                }
+            }
             initFlags |= SD_INIT_ATTEMPTED;
         }
     }
@@ -1015,7 +1018,7 @@ void init(void)
 
     debugInit();
 
-    //unusedPinsInit();
+    unusedPinsInit();
 
     tasksInit();
 

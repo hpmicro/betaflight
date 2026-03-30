@@ -13,8 +13,8 @@ define region FLASH = [from 0x80003000 size (_flash_size - 0x3000 - 32k) ];   /*
 define region XPI_CFG = [from end of region FLASH + 1 size (32k) ];   /* XPI0 */
 define region ILM = [from 0x00000000 size 128k];    /* ILM */
 define region DLM = [from 0x00080000 size 128k];    /* DLM */
-define region AXI_SRAM  = [from 0x01080000 size 256k];
-define region NONCACHEABLE_RAM = [from 0x010C0000 size 256k];
+define region AXI_SRAM  = [from 0x01080000 size 512k - 64k];
+define region NONCACHEABLE_RAM = [from 0x010F0000 size 64k];
 define region AHB_SRAM = [from 0xF0300000 size 32k];
 
 /* Blocks */

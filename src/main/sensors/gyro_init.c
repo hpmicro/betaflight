@@ -50,6 +50,7 @@
 #include "drivers/accgyro/accgyro_spi_mpu6500.h"
 #include "drivers/accgyro/accgyro_spi_mpu9250.h"
 #include "drivers/accgyro/accgyro_spi_lsm6dsv16x.h"
+#include "drivers/accgyro/accgyro_spi_mic6200.h"
 
 #ifdef USE_GYRO_L3GD20
 #include "drivers/accgyro/accgyro_spi_l3gd20.h"
@@ -461,6 +462,22 @@ STATIC_UNIT_TESTED gyroHardware_e gyroDetect(gyroDev_t *dev)
     case GYRO_ICM20689:
         if (icm20689SpiGyroDetect(dev)) {
             gyroHardware = GYRO_ICM20689;
+            break;
+        }
+        FALLTHROUGH;
+#endif
+
+#if defined(USE_GYRO_SPI_MIC6200)
+    case GYRO_MIC6200_SPI:
+        if (mic6200SpiGyroDetect(dev)) {
+            switch (dev->mpuDetectionResult.sensor) {
+            case MIC6200_SPI:
+                gyroHardware = GYRO_MIC6200_SPI;
+                break;
+            default:
+                gyroHardware = GYRO_NONE;
+                break;
+            }
             break;
         }
         FALLTHROUGH;

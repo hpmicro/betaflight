@@ -3,13 +3,9 @@
 
 board:
     soc: HPM6360
-    device: HPM6360xVMx
+    device: HPM6364xEPx
     openocd-soc: hpm6360-dual-core
     openocd-probe: cmsis_dap
-    on-board-ram:
-      type: sdram
-      size: 32M
-      width: 32bit
     on-board-flash:
       type: qspi-nor-flash
       size: 4M

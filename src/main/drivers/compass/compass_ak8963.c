@@ -118,9 +118,17 @@ static bool ak8963SlaveReadRegisterBuffer(const extDevice_t *slaveDev, uint8_t r
     ak8963SpiWriteRegisterDelay(dev, MPU_RA_I2C_SLV0_REG, reg);                             // set I2C slave register
     ak8963SpiWriteRegisterDelay(dev, MPU_RA_I2C_SLV0_CTRL, (len & 0x0F) | I2C_SLV0_EN);     // read number of bytes
     delay(4);
+#ifndef HPMicro
     __disable_irq();
+#else
+    disable_global_irq(CSR_MSTATUS_MIE_MASK);
+#endif
     bool ack = spiReadRegMskBufRB(dev, MPU_RA_EXT_SENS_DATA_00, buf, len);            // read I2C
+#ifndef HPMicro
     __enable_irq();
+#else
+    enable_global_irq(CSR_MSTATUS_MIE_MASK);
+#endif
     return ack;
 }
 

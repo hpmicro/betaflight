@@ -25,7 +25,7 @@
 #include "drivers/sensor.h"
 
 #if defined(USE_GYRO_SPI_MPU6500) || defined(USE_GYRO_SPI_MPU6000) ||  defined(USE_GYRO_SPI_MPU9250) || defined(USE_GYRO_SPI_ICM20649) \
- || defined(USE_GYRO_SPI_ICM20689)
+ || defined(USE_GYRO_SPI_ICM20689) || defined(USE_GYRO_SPI_MIC6200)
 #define GYRO_USES_SPI
 #endif
 
@@ -47,6 +47,7 @@
 #define ICM42605_WHO_AM_I_CONST             (0x42)
 #define ICM42688P_WHO_AM_I_CONST            (0x47)
 #define LSM6DSV16X_WHO_AM_I_CONST           (0x70)
+#define MIC6200_WHO_AM_I_CONST              (0xF9)
 
 // RA = Register Address
 
@@ -109,6 +110,18 @@
 #define MPU_RA_ACCEL_YOUT_L     0x3E
 #define MPU_RA_ACCEL_ZOUT_H     0x3F
 #define MPU_RA_ACCEL_ZOUT_L     0x40
+#define MIC6200_RA_GYRO_XOUT_LSB     0x08
+#define MIC6200_RA_GYRO_XOUT_MSB     0x09
+#define MIC6200_RA_GYRO_YOUT_LSB     0x0A
+#define MIC6200_RA_GYRO_YOUT_MSB     0x0B
+#define MIC6200_RA_GYRO_ZOUT_LSB     0x0C
+#define MIC6200_RA_GYRO_ZOUT_MSB     0x0D
+#define MIC6200_RA_ACCEL_XOUT_LSB    0x0E
+#define MIC6200_RA_ACCEL_XOUT_MSB    0x0F
+#define MIC6200_RA_ACCEL_YOUT_LSB    0x10
+#define MIC6200_RA_ACCEL_YOUT_MSB    0x11
+#define MIC6200_RA_ACCEL_ZOUT_LSB    0x12
+#define MIC6200_RA_ACCEL_ZOUT_MSB    0x13
 #define MPU_RA_TEMP_OUT_H       0x41
 #define MPU_RA_TEMP_OUT_L       0x42
 #define MPU_RA_GYRO_XOUT_H      0x43
@@ -207,7 +220,8 @@ typedef enum {
     BMI_270_SPI,
     LSM6DSO_SPI,
     L3GD20_SPI,
-    LSM6DSV16X_SPI
+    LSM6DSV16X_SPI,
+    MIC6200_SPI,
 } mpuSensor_e;
 
 typedef enum {

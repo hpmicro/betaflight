@@ -59,7 +59,7 @@ void i2cHardwareConfigure(const i2cConfig_t *i2cConfig)
 #if defined(STM32F4) || defined(STM32H7) || defined(STM32G4) || defined(AT32F4) || defined(HPMicro)
                 pDev->sclAF = hardware->sclPins[pindex].af;
 #if defined(HPMicro)
-                pDev->sclAF2 = hardware->sclPins[pindex].af2;
+                pDev->sclbpAF = hardware->sclPins[pindex].af2;
 #endif
 #endif
             }
@@ -68,7 +68,7 @@ void i2cHardwareConfigure(const i2cConfig_t *i2cConfig)
 #if defined(STM32F4) || defined(STM32H7) || defined(STM32G4) || defined(AT32F4) || defined(HPMicro)
                 pDev->sdaAF = hardware->sdaPins[pindex].af;
 #if defined(HPMicro)
-                pDev->sdaAF2 = hardware->sdaPins[pindex].af2;
+                pDev->sdabpAF = hardware->sdaPins[pindex].af2;
 #endif
 #endif
             }

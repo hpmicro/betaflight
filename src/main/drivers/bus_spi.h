@@ -182,6 +182,8 @@ uint8_t spiReadWriteReg(const extDevice_t *dev, uint8_t reg, uint8_t data);
 void spiReadWriteBuf(const extDevice_t *dev, uint8_t *txData, uint8_t *rxData, int len);
 bool spiReadWriteBufRB(const extDevice_t *dev, uint8_t *txData, uint8_t *rxData, int length);
 
+uint8_t spiReadRegMic6200(const extDevice_t *dev, uint8_t reg);
+void spiWriteRegMic6200(const extDevice_t *dev, uint8_t reg, uint8_t data);
 //
 // Config
 //

@@ -57,6 +57,7 @@
 #include "drivers/accgyro/accgyro_spi_mpu9250.h"
 #include "drivers/accgyro/accgyro_spi_l3gd20.h"
 #include "drivers/accgyro/accgyro_spi_lsm6dsv16x.h"
+#include "drivers/accgyro/accgyro_spi_mic6200.h"
 #include "drivers/accgyro/accgyro_mpu.h"
 
 #include "pg/pg.h"
@@ -157,6 +158,13 @@ static void mpuIntExtiHandler(extiCallbackRec_t *cb)
 
     if (gyro->gyroModeSPI == GYRO_EXTI_INT_DMA) {
         spiSequence(&gyro->dev, gyro->segments);
+    } else {
+#ifdef USE_GYRO_SPI_MIC6200
+       if (gyro->mpuDetectionResult.sensor == MIC6200_SPI) {
+           for (int i = 0x08; i < 0x14; i++)
+              spiReadRegMic6200(&gyro->dev, i);
+       }
+#endif
     }
 
     gyro->detectedEXTI++;
@@ -186,7 +194,7 @@ static void mpuIntExtiInit(gyroDev_t *gyro)
 
     IOInit(mpuIntIO, OWNER_GYRO_EXTI, 0);
     EXTIHandlerInit(&gyro->exti, mpuIntExtiHandler);
-    EXTIConfig(mpuIntIO, &gyro->exti, NVIC_PRIO_MPU_INT_EXTI, IOCFG_IN_FLOATING, BETAFLIGHT_EXTI_TRIGGER_RISING);
+    EXTIConfig(mpuIntIO, &gyro->exti, NVIC_PRIO_MPU_INT_EXTI, IOCFG_IN_FLOATING, BETAFLIGHT_EXTI_TRIGGER_FALLING);
     EXTIEnable(mpuIntIO);
 }
 
@@ -226,23 +234,49 @@ bool mpuGyroRead(gyroDev_t *gyro)
 #ifdef USE_SPI_GYRO
 bool mpuAccReadSPI(accDev_t *acc)
 {
+    uint32_t len;
     switch (acc->gyro->gyroModeSPI) {
     case GYRO_EXTI_INT:
     case GYRO_EXTI_NO_INT:
     {
-        acc->gyro->dev.txBuf[0] = acc->gyro->accDataReg | 0x80;
-
+#ifdef USE_GYRO_SPI_MIC6200
+        if (acc->mpuDetectionResult.sensor == MIC6200_SPI) {
+            len = 2 * sizeof(uint8_t) + 3 * sizeof(int16_t);//3 result + 2 address
+            acc->gyro->dev.txBuf[0] = acc->gyro->accDataReg | 0x80;
+            acc->gyro->dev.txBuf[1] = acc->gyro->accDataReg & 0x80;
+        } else {
+#endif
+            len = 7;
+            acc->gyro->dev.txBuf[0] = acc->gyro->accDataReg | 0x80;
+#ifdef USE_GYRO_SPI_MIC6200
+        }
+#endif
         busSegment_t segments[] = {
-                {.u.buffers = {NULL, NULL}, 7, true, NULL},
+                {.u.buffers = {NULL, NULL}, len, true, NULL},
                 {.u.link = {NULL, NULL}, 0, true, NULL},
         };
         segments[0].u.buffers.txData = acc->gyro->dev.txBuf;
-        segments[0].u.buffers.rxData = &acc->gyro->dev.rxBuf[1];
+#ifdef USE_GYRO_SPI_MIC6200
+        if (acc->mpuDetectionResult.sensor == MIC6200_SPI) {
+            segments[0].u.buffers.rxData = &acc->gyro->dev.rxBuf[0];
+        } else {
+#endif
+            segments[0].u.buffers.rxData = &acc->gyro->dev.rxBuf[1];
+#ifdef USE_GYRO_SPI_MIC6200
+        }
+#endif
 
         spiSequence(&acc->gyro->dev, &segments[0]);
 
         // Wait for completion
         spiWait(&acc->gyro->dev);
+        if (acc->gyro->mpuDetectionResult.sensor == MIC6200_SPI) {
+            int16_t *accData = (int16_t *)acc->gyro->dev.rxBuf;
+            acc->ADCRaw[X] = accData[4];
+            acc->ADCRaw[Y] = accData[5];
+            acc->ADCRaw[Z] = accData[6];
+            return true;
+        }
 
         // Fall through
         FALLTHROUGH;
@@ -255,9 +289,19 @@ bool mpuAccReadSPI(accDev_t *acc)
 
         // This data was read from the gyro, which is the same SPI device as the acc
         int16_t *accData = (int16_t *)acc->gyro->dev.rxBuf;
-        acc->ADCRaw[X] = __builtin_bswap16(accData[1]);
-        acc->ADCRaw[Y] = __builtin_bswap16(accData[2]);
-        acc->ADCRaw[Z] = __builtin_bswap16(accData[3]);
+#ifdef USE_GYRO_SPI_MIC6200
+        if (acc->gyro->mpuDetectionResult.sensor == MIC6200_SPI) {
+            acc->ADCRaw[X] = accData[4];
+            acc->ADCRaw[Y] = accData[5];
+            acc->ADCRaw[Z] = accData[6];
+        } else {
+#endif
+            acc->ADCRaw[X] = __builtin_bswap16(accData[1]);
+            acc->ADCRaw[Y] = __builtin_bswap16(accData[2]);
+            acc->ADCRaw[Z] = __builtin_bswap16(accData[3]);
+#ifdef USE_GYRO_SPI_MIC6200
+        }
+#endif
         break;
     }
 
@@ -276,21 +320,33 @@ bool mpuGyroReadSPI(gyroDev_t *gyro)
     case GYRO_EXTI_INIT:
     {
         // Initialise the tx buffer to all 0xff
-        memset(gyro->dev.txBuf, 0xff, 16);
+        memset(gyro->dev.txBuf, 0xFF, 16);
 
         // Check that minimum number of interrupts have been detected
 
         // We need some offset from the gyro interrupts to ensure sampling after the interrupt
         gyro->gyroDmaMaxDuration = 5;
+        
         if (gyro->detectedEXTI > GYRO_EXTI_DETECT_THRESHOLD) {
             if (spiUseDMA(&gyro->dev)) {
                 gyro->dev.callbackArg = (uint32_t)gyro;
-                gyro->dev.txBuf[0] = gyro->accDataReg | 0x80;
-                gyro->segments[0].len = gyro->gyroDataReg - gyro->accDataReg + sizeof(uint8_t) + 3 * sizeof(int16_t);
                 gyro->segments[0].callback = mpuIntCallback;
                 gyro->segments[0].u.buffers.txData = gyro->dev.txBuf;
-                gyro->segments[0].u.buffers.rxData = &gyro->dev.rxBuf[1];
                 gyro->segments[0].negateCS = true;
+#ifdef USE_GYRO_SPI_MIC6200
+                if (gyro->mpuDetectionResult.sensor == MIC6200_SPI) {
+                    gyro->dev.txBuf[0] = gyro->gyroDataReg | 0x80;
+                    gyro->dev.txBuf[1] = gyro->gyroDataReg & 0x80;
+                    gyro->segments[0].len = 3 * sizeof(uint8_t) + 6 * sizeof(int16_t);//6 result + 2 address
+                    gyro->segments[0].u.buffers.rxData = &gyro->dev.rxBuf[0];
+                } else {
+#endif
+                    gyro->dev.txBuf[0] = gyro->accDataReg | 0x80;
+                    gyro->segments[0].len = gyro->gyroDataReg - gyro->accDataReg + sizeof(uint8_t) + 3 * sizeof(int16_t);
+                    gyro->segments[0].u.buffers.rxData = &gyro->dev.rxBuf[1];
+#ifdef USE_GYRO_SPI_MIC6200
+                }
+#endif
                 gyro->gyroModeSPI = GYRO_EXTI_INT_DMA;
             } else {
                 // Interrupts are present, but no DMA
@@ -305,36 +361,84 @@ bool mpuGyroReadSPI(gyroDev_t *gyro)
     case GYRO_EXTI_INT:
     case GYRO_EXTI_NO_INT:
     {
+        uint32_t len;
         gyro->dev.txBuf[0] = gyro->gyroDataReg | 0x80;
-
+#ifdef USE_GYRO_SPI_MIC6200
+        if (gyro->mpuDetectionResult.sensor == MIC6200_SPI) {
+            len = 3 * sizeof(uint8_t) + 6 * sizeof(int16_t);//6 result + 2 address
+            gyro->dev.txBuf[1] = gyro->gyroDataReg & 0x80;
+        } else {
+#endif
+            len = 7;
+#ifdef USE_GYRO_SPI_MIC6200
+        }
+#endif
         busSegment_t segments[] = {
-                {.u.buffers = {NULL, NULL}, 7, true, NULL},
+                {.u.buffers = {NULL, NULL}, len, true, NULL},
                 {.u.link = {NULL, NULL}, 0, true, NULL},
         };
         segments[0].u.buffers.txData = gyro->dev.txBuf;
-        segments[0].u.buffers.rxData = &gyro->dev.rxBuf[1];
+#ifdef USE_GYRO_SPI_MIC6200
+        if (gyro->mpuDetectionResult.sensor == MIC6200_SPI) {
+            segments[0].u.buffers.rxData = &gyro->dev.rxBuf[0];
+        } else {
+#endif
+            segments[0].u.buffers.rxData = &gyro->dev.rxBuf[1];
+#ifdef USE_GYRO_SPI_MIC6200
+        }
+#endif
 
         spiSequence(&gyro->dev, &segments[0]);
 
         // Wait for completion
         spiWait(&gyro->dev);
-
-        gyro->gyroADCRaw[X] = __builtin_bswap16(gyroData[1]);
-        gyro->gyroADCRaw[Y] = __builtin_bswap16(gyroData[2]);
-        gyro->gyroADCRaw[Z] = __builtin_bswap16(gyroData[3]);
+#ifdef USE_GYRO_SPI_MIC6200
+        if (gyro->mpuDetectionResult.sensor == MIC6200_SPI) {
+            int8_t sxz = gyro->dev.sxz;
+            int8_t szx = gyro->dev.szx;
+            int16_t tmp_data[3] = {0};
+            tmp_data[0] = gyroData[1];
+            tmp_data[1] = gyroData[2];
+            tmp_data[2] = gyroData[3];
+            gyro->gyroADCRaw[X] = tmp_data[0] + sxz * tmp_data[2] / 100;
+            gyro->gyroADCRaw[Y] = tmp_data[1];
+            gyro->gyroADCRaw[Z] = tmp_data[2] + szx * tmp_data[0] / 100;
+        } else {
+#endif
+            gyro->gyroADCRaw[X] = __builtin_bswap16(gyroData[1]);
+            gyro->gyroADCRaw[Y] = __builtin_bswap16(gyroData[2]);
+            gyro->gyroADCRaw[Z] = __builtin_bswap16(gyroData[3]);
+#ifdef USE_GYRO_SPI_MIC6200
+        }
+#endif
         break;
     }
 
     case GYRO_EXTI_INT_DMA:
     {
-        // Acc and gyro data may not be continuous (MPU6xxx has temperature in between)
-        const uint8_t gyroDataIndex = ((gyro->gyroDataReg - gyro->accDataReg) >> 1) + 1;
-
-        // If read was triggered in interrupt don't bother waiting. The worst that could happen is that we pick
-        // up an old value.
-        gyro->gyroADCRaw[X] = __builtin_bswap16(gyroData[gyroDataIndex]);
-        gyro->gyroADCRaw[Y] = __builtin_bswap16(gyroData[gyroDataIndex + 1]);
-        gyro->gyroADCRaw[Z] = __builtin_bswap16(gyroData[gyroDataIndex + 2]);
+#ifdef USE_GYRO_SPI_MIC6200
+        if (gyro->mpuDetectionResult.sensor == MIC6200_SPI) {
+            int8_t sxz = gyro->dev.sxz;
+            int8_t szx = gyro->dev.szx;
+            int16_t tmp_data[3] = {0};
+            tmp_data[0] = gyroData[1];
+            tmp_data[1] = gyroData[2];
+            tmp_data[2] = gyroData[3];
+            gyro->gyroADCRaw[X] = tmp_data[0] + sxz * tmp_data[2] / 100;
+            gyro->gyroADCRaw[Y] = tmp_data[1];
+            gyro->gyroADCRaw[Z] = tmp_data[2] + szx * tmp_data[0] / 100;
+        } else {
+#endif
+            // Acc and gyro data may not be continuous (MPU6xxx has temperature in between)
+            const uint8_t gyroDataIndex = ((gyro->gyroDataReg - gyro->accDataReg) >> 1) + 1;
+            // If read was triggered in interrupt don't bother waiting. The worst that could happen is that we pick
+            // up an old value.
+            gyro->gyroADCRaw[X] = __builtin_bswap16(gyroData[gyroDataIndex]);
+            gyro->gyroADCRaw[Y] = __builtin_bswap16(gyroData[gyroDataIndex + 1]);
+            gyro->gyroADCRaw[Z] = __builtin_bswap16(gyroData[gyroDataIndex + 2]);
+#ifdef USE_GYRO_SPI_MIC6200
+        }
+#endif
         break;
     }
 
@@ -374,6 +478,9 @@ static gyroSpiDetectFn_t gyroSpiDetectFnTable[] = {
 #endif
 #if defined(USE_GYRO_SPI_ICM42605) || defined(USE_GYRO_SPI_ICM42688P)
     icm426xxSpiDetect,
+#endif
+#ifdef USE_GYRO_SPI_MIC6200
+    mic6200SpiDetect,
 #endif
 #ifdef USE_GYRO_SPI_ICM20649
     icm20649SpiDetect,

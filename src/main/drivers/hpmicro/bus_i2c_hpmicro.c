@@ -22,6 +22,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include "board.h"
 
 #include "platform.h"
 
@@ -40,7 +41,7 @@
 #include "hpm_clock_drv.h"
 #include "hpm_batt_iomux.h"
 #include "hpm_pmic_iomux.h"
-
+extern void board_i2c_bus_clear(I2C_Type *ptr);
 #define TEST_TRANSFER_DATA_IN_BYTE  (128U)
 uint8_t rx_buff[TEST_TRANSFER_DATA_IN_BYTE];
 uint8_t tx_buff[TEST_TRANSFER_DATA_IN_BYTE];
@@ -51,12 +52,7 @@ volatile bool i2c_transmit_complete;
 static void i2c_er_handler(I2CDevice device);
 static void i2c_ev_handler(I2CDevice device);
 
-#ifdef STM32F4
-#define IOCFG_I2C_PU IO_CONFIG(GPIO_Mode_AF, 0, GPIO_OType_OD, GPIO_PuPd_UP)
-#define IOCFG_I2C    IO_CONFIG(GPIO_Mode_AF, 0, GPIO_OType_OD, GPIO_PuPd_NOPULL)
-#else // STM32F4
 #define IOCFG_I2C   IOCFG_AF_OD
-#endif
 
 const i2cHardware_t i2cHardware[I2CDEV_COUNT] = {
 #ifdef USE_I2C_DEVICE_1
@@ -65,23 +61,65 @@ const i2cHardware_t i2cHardware[I2CDEV_COUNT] = {
         .reg = HPM_I2C0,
         .sclPins = {
             I2CPINDEF(PA6, IOC_PAD_FUNC_CTL_LOOP_BACK_MASK | IOC_PA06_FUNC_CTL_I2C0_SCL, -1),
-            I2CPINDEF(PB11, IOC_PAD_FUNC_CTL_LOOP_BACK_MASK | IOC_PB11_FUNC_CTL_I2C0_SCL, -1),
-            I2CPINDEF(PD1, IOC_PAD_FUNC_CTL_LOOP_BACK_MASK | IOC_PD01_FUNC_CTL_I2C0_SCL, -1),
-            I2CPINDEF(PE15, IOC_PAD_FUNC_CTL_LOOP_BACK_MASK | IOC_PE15_FUNC_CTL_I2C0_SCL, -1),
-            I2CPINDEF(PF5, IOC_PAD_FUNC_CTL_LOOP_BACK_MASK | IOC_PF05_FUNC_CTL_I2C0_SCL, -1),
-            I2CPINDEF(PZ11, IOC_PAD_FUNC_CTL_LOOP_BACK_MASK | IOC_PZ11_FUNC_CTL_I2C0_SCL, BIOC_PZ11_FUNC_CTL_SOC_PZ_11),
+            I2CPINDEF(PA23, IOC_PAD_FUNC_CTL_LOOP_BACK_MASK | IOC_PA23_FUNC_CTL_I2C0_SCL, -1),
+            I2CPINDEF(PB22, IOC_PAD_FUNC_CTL_LOOP_BACK_MASK | IOC_PB22_FUNC_CTL_I2C0_SCL, -1),
+            I2CPINDEF(PC13, IOC_PAD_FUNC_CTL_LOOP_BACK_MASK | IOC_PC13_FUNC_CTL_I2C0_SCL, -1),
+            I2CPINDEF(PY4, IOC_PAD_FUNC_CTL_LOOP_BACK_MASK | IOC_PY04_FUNC_CTL_I2C0_SCL, PIOC_PY04_FUNC_CTL_SOC_PY_04),
         },
         .sdaPins = {
-            I2CPINDEF(PA5, IOC_PAD_FUNC_CTL_LOOP_BACK_MASK | IOC_PA05_FUNC_CTL_I2C0_SDA, -1),
-            I2CPINDEF(PB10, IOC_PAD_FUNC_CTL_LOOP_BACK_MASK | IOC_PB10_FUNC_CTL_I2C0_SDA, -1),
-            I2CPINDEF(PD0, IOC_PAD_FUNC_CTL_LOOP_BACK_MASK | IOC_PD00_FUNC_CTL_I2C0_SDA, -1),
-            I2CPINDEF(PE14, IOC_PAD_FUNC_CTL_LOOP_BACK_MASK | IOC_PE14_FUNC_CTL_I2C0_SDA, -1),
-            I2CPINDEF(PF8, IOC_PAD_FUNC_CTL_LOOP_BACK_MASK | IOC_PF08_FUNC_CTL_I2C0_SDA, -1),
-            I2CPINDEF(PZ10, IOC_PAD_FUNC_CTL_LOOP_BACK_MASK | IOC_PZ10_FUNC_CTL_I2C0_SDA, BIOC_PZ10_FUNC_CTL_SOC_PZ_10),
+            I2CPINDEF(PA7, IOC_PAD_FUNC_CTL_LOOP_BACK_MASK | IOC_PA07_FUNC_CTL_I2C0_SDA, -1),
+            I2CPINDEF(PA24, IOC_PAD_FUNC_CTL_LOOP_BACK_MASK | IOC_PA24_FUNC_CTL_I2C0_SDA, -1),
+            I2CPINDEF(PB23, IOC_PAD_FUNC_CTL_LOOP_BACK_MASK | IOC_PB23_FUNC_CTL_I2C0_SDA, -1),
+            I2CPINDEF(PC14, IOC_PAD_FUNC_CTL_LOOP_BACK_MASK | IOC_PC14_FUNC_CTL_I2C0_SDA, -1),
+            I2CPINDEF(PY5, IOC_PAD_FUNC_CTL_LOOP_BACK_MASK | IOC_PY05_FUNC_CTL_I2C0_SDA, PIOC_PY05_FUNC_CTL_SOC_PY_05),
         },
         .rcc = clock_i2c0,
         .ev_irq = IRQn_I2C0,
         .er_irq = IRQn_I2C0,
+    },
+#endif
+#ifdef USE_I2C_DEVICE_2
+    {
+        .device = I2CDEV_2,
+        .reg = HPM_I2C1,
+        .sclPins = {
+            I2CPINDEF(PA8, IOC_PAD_FUNC_CTL_LOOP_BACK_MASK | IOC_PA08_FUNC_CTL_I2C1_SCL, -1),
+            I2CPINDEF(PA25, IOC_PAD_FUNC_CTL_LOOP_BACK_MASK | IOC_PA25_FUNC_CTL_I2C1_SCL, -1),
+            I2CPINDEF(PB24, IOC_PAD_FUNC_CTL_LOOP_BACK_MASK | IOC_PB24_FUNC_CTL_I2C1_SCL, -1),
+            I2CPINDEF(PC15, IOC_PAD_FUNC_CTL_LOOP_BACK_MASK | IOC_PC15_FUNC_CTL_I2C1_SCL, -1),
+            I2CPINDEF(PY6, IOC_PAD_FUNC_CTL_LOOP_BACK_MASK | IOC_PY06_FUNC_CTL_I2C1_SCL, PIOC_PY06_FUNC_CTL_SOC_PY_06),
+        },
+        .sdaPins = {
+            I2CPINDEF(PA9, IOC_PAD_FUNC_CTL_LOOP_BACK_MASK | IOC_PA09_FUNC_CTL_I2C1_SDA, -1),
+            I2CPINDEF(PA26, IOC_PAD_FUNC_CTL_LOOP_BACK_MASK | IOC_PA26_FUNC_CTL_I2C1_SDA, -1),
+            I2CPINDEF(PB25, IOC_PAD_FUNC_CTL_LOOP_BACK_MASK | IOC_PB25_FUNC_CTL_I2C1_SDA, -1),
+            I2CPINDEF(PC16, IOC_PAD_FUNC_CTL_LOOP_BACK_MASK | IOC_PC16_FUNC_CTL_I2C1_SDA, -1),
+            I2CPINDEF(PY7, IOC_PAD_FUNC_CTL_LOOP_BACK_MASK | IOC_PY07_FUNC_CTL_I2C1_SDA, PIOC_PY07_FUNC_CTL_SOC_PY_07),
+        },
+        .rcc = clock_i2c1,
+        .ev_irq = IRQn_I2C1,
+        .er_irq = IRQn_I2C1,
+    },
+#endif
+#ifdef USE_I2C_DEVICE_3
+    {
+        .device = I2CDEV_3,
+        .reg = HPM_I2C2,
+        .sclPins = {
+            I2CPINDEF(PA19, IOC_PAD_FUNC_CTL_LOOP_BACK_MASK | IOC_PA19_FUNC_CTL_I2C2_SCL, -1),
+            I2CPINDEF(PB18, IOC_PAD_FUNC_CTL_LOOP_BACK_MASK | IOC_PB18_FUNC_CTL_I2C2_SCL, -1),
+            I2CPINDEF(PC9, IOC_PAD_FUNC_CTL_LOOP_BACK_MASK | IOC_PC09_FUNC_CTL_I2C2_SCL, -1),
+            I2CPINDEF(PZ2, IOC_PAD_FUNC_CTL_LOOP_BACK_MASK | IOC_PZ02_FUNC_CTL_I2C2_SCL, BIOC_PZ02_FUNC_CTL_SOC_PZ_02),
+        },
+        .sdaPins = {
+            I2CPINDEF(PA20, IOC_PAD_FUNC_CTL_LOOP_BACK_MASK | IOC_PA20_FUNC_CTL_I2C2_SDA, -1),
+            I2CPINDEF(PB19, IOC_PAD_FUNC_CTL_LOOP_BACK_MASK | IOC_PB19_FUNC_CTL_I2C2_SDA, -1),
+            I2CPINDEF(PC10, IOC_PAD_FUNC_CTL_LOOP_BACK_MASK | IOC_PC10_FUNC_CTL_I2C2_SDA, -1),
+            I2CPINDEF(PZ3, IOC_PAD_FUNC_CTL_LOOP_BACK_MASK | IOC_PZ03_FUNC_CTL_I2C2_SDA, BIOC_PZ03_FUNC_CTL_SOC_PZ_03),
+        },
+        .rcc = clock_i2c2,
+        .ev_irq = IRQn_I2C2,
+        .er_irq = IRQn_I2C2,
     },
 #endif
 };
@@ -121,7 +159,7 @@ static bool i2cHandleHardwareFailure(I2CDevice device)
 
 bool i2cWriteBuffer(I2CDevice device, uint8_t addr_, uint8_t reg_, uint8_t len_, uint8_t *data)
 {
-    hpm_stat_t stat;
+    hpm_stat_t status;
     if (device == I2CINVALID || device >= I2CDEV_COUNT) {
         return false;
     }
@@ -136,13 +174,9 @@ bool i2cWriteBuffer(I2CDevice device, uint8_t addr_, uint8_t reg_, uint8_t len_,
     if (state == I2C_START) {
         return false;
     }
-
-    timeUs_t timeoutStartUs = microsISR();
-
-    if (status_success != i2c_master_address_write(I2Cx, addr_, (uint8_t *)&reg_, 1, data, len_)) {
-        printf("Master write failed");
-        while (1) {
-        }
+    status = i2c_master_address_write(I2Cx, addr_, (uint8_t *)&reg_, 1, data, len_);
+    if (status_success != status) {
+        return false;
     }
     return true;
 }
@@ -178,7 +212,7 @@ bool i2cWrite(I2CDevice device, uint8_t addr_, uint8_t reg_, uint8_t data)
 
 bool i2cReadBuffer(I2CDevice device, uint8_t addr_, uint8_t reg_, uint8_t len, uint8_t* buf)
 {
-    hpm_stat_t stat;
+    hpm_stat_t status;
     if (device == I2CINVALID || device >= I2CDEV_COUNT) {
         return false;
     }
@@ -192,11 +226,9 @@ bool i2cReadBuffer(I2CDevice device, uint8_t addr_, uint8_t reg_, uint8_t len, u
     if (state == I2C_START) {
         return false;
     }
-    
-    if (status_success != i2c_master_address_read(I2Cx, addr_, (uint8_t *)&reg_, 1, buf, len)) {
-        printf("Master read failed\n");
-        while (1) {
-        }
+    status = i2c_master_address_read(I2Cx, addr_, (uint8_t *)&reg_, 1, buf, len);
+    if (status_success != status) {
+        return false;
     }
     return true;
 }
@@ -208,18 +240,12 @@ bool i2cRead(I2CDevice device, uint8_t addr_, uint8_t reg_, uint8_t len, uint8_t
 
 static void i2c_er_handler(I2CDevice device)
 {
-    I2C_TypeDef *I2Cx = i2cDevice[device].hardware->reg;
-
-    i2cState_t *state = &i2cDevice[device].state;
-
+    (void)device;
 }
 
 void i2c_ev_handler(I2CDevice device)
 {
-    I2C_TypeDef *I2Cx = i2cDevice[device].hardware->reg;
-
-    i2cState_t *state = &i2cDevice[device].state;
-
+    (void)device;
 }
 
 void i2cInit(I2CDevice device)
@@ -251,16 +277,10 @@ void i2cInit(I2CDevice device)
         clock_add_to_group(hw->rcc, 0);
     }
 
-    //FIXME
-
-    //i2c_enable_irq(device, I2C_EVENT_TRANSACTION_COMPLETE | I2C_EVENT_FIFO_EMPTY);
-    //intc_m_enable_irq_with_priority(pDev->nirq, 1);
-
-    //i2cUnstick(scl, sda);
     board_i2c_bus_clear(I2Cx);
     // Init pins
-    IOConfigGPIOAF(scl, pDev->pullUp ? IOCFG_AF_OD_UP : IOCFG_AF_OD, pDev->sclAF, pDev->sclAF2);
-    IOConfigGPIOAF(sda, pDev->pullUp ? IOCFG_AF_OD_UP : IOCFG_AF_OD, pDev->sdaAF, pDev->sdaAF2);
+    IOConfigGPIOAF(scl, pDev->pullUp ? IOCFG_AF_OD_UP : IOCFG_AF_OD, pDev->sclAF, pDev->sclbpAF);
+    IOConfigGPIOAF(sda, pDev->pullUp ? IOCFG_AF_OD_UP : IOCFG_AF_OD, pDev->sdaAF, pDev->sdabpAF);
 
 
     config.i2c_mode = i2c_mode_fast;

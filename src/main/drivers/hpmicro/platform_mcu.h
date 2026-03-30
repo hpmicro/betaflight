@@ -22,6 +22,7 @@
 #include "hpm6360.h"
 #endif
 #include "hpm_soc.h"
+#include "hpm_interrupt.h"
 #include "hpm_romapi.h"
 #include "board.h"
 

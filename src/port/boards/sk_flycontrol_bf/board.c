@@ -76,7 +76,7 @@
  *      0 - 4MB / 1 - 8MB / 2 - 16MB
  */
 #if defined(FLASH_XIP) && FLASH_XIP
-__attribute__ ((section(".nor_cfg_option"), used)) const uint32_t option[4] = {0xfcf90001, 0x00000007, 0x0, 0x0};
+__attribute__ ((section(".nor_cfg_option"), used)) const uint32_t option[4] = {0xfcf90002, 0x00000007, 0x1000, 0x0};
 #endif
 
 #if defined(FLASH_UF2) && FLASH_UF2
@@ -232,32 +232,82 @@ void board_timer_create(uint32_t ms, board_timer_cb cb)
 void board_i2c_bus_clear(I2C_Type *ptr)
 {
     init_i2c_pins_as_gpio(ptr);
-    if (ptr == BOARD_APP_I2C_BASE) {
-        gpio_set_pin_input(BOARD_I2C_GPIO_CTRL, BOARD_I2C_SDA_GPIO_INDEX, BOARD_I2C_SDA_GPIO_PIN);
-        gpio_set_pin_input(BOARD_I2C_GPIO_CTRL, BOARD_I2C_SCL_GPIO_INDEX, BOARD_I2C_SCL_GPIO_PIN);
-        if (!gpio_read_pin(BOARD_I2C_GPIO_CTRL, BOARD_I2C_SCL_GPIO_INDEX, BOARD_I2C_SCL_GPIO_PIN)) {
-            printf("CLK is low, please power cycle the board\n");
+    if (ptr == HPM_I2C0) {
+        gpio_set_pin_input(HPM_GPIO0, GPIO_DO_GPIOA, 24);
+        gpio_set_pin_input(HPM_GPIO0, GPIO_DO_GPIOA, 23);
+        if (!gpio_read_pin(HPM_GPIO0, GPIO_DO_GPIOA, 23)) {
+            printf("I2C0 CLK is low, please power cycle the board\n");
             while (1) {
             }
         }
-        if (!gpio_read_pin(BOARD_I2C_GPIO_CTRL, BOARD_I2C_SDA_GPIO_INDEX, BOARD_I2C_SDA_GPIO_PIN)) {
-            printf("SDA is low, try to issue I2C bus clear\n");
+        if (!gpio_read_pin(HPM_GPIO0, GPIO_DO_GPIOA, 24)) {
+            printf("I2C0 SDA is low, try to issue I2C bus clear\n");
         } else {
-            printf("I2C bus is ready\n");
             return;
         }
 
-        gpio_set_pin_output(BOARD_I2C_GPIO_CTRL, BOARD_I2C_SCL_GPIO_INDEX, BOARD_I2C_SCL_GPIO_PIN);
+        gpio_set_pin_output(HPM_GPIO0, GPIO_DO_GPIOA, 23);
         while (1) {
             for (uint32_t i = 0; i < 9; i++) {
-                gpio_write_pin(BOARD_I2C_GPIO_CTRL, BOARD_I2C_SCL_GPIO_INDEX, BOARD_I2C_SCL_GPIO_PIN, 1);
+                gpio_write_pin(HPM_GPIO0, GPIO_DO_GPIOA, 23, 1);
                 board_delay_ms(10);
-                gpio_write_pin(BOARD_I2C_GPIO_CTRL, BOARD_I2C_SCL_GPIO_INDEX, BOARD_I2C_SCL_GPIO_PIN, 0);
+                gpio_write_pin(HPM_GPIO0, GPIO_DO_GPIOA, 23, 0);
                 board_delay_ms(10);
             }
             board_delay_ms(100);
         }
-        printf("I2C bus is cleared\n");
+        printf("I2C0 bus is cleared\n");
+    } else if (ptr == HPM_I2C1) {
+        gpio_set_pin_input(HPM_GPIO0, GPIO_DO_GPIOA, 25);
+        gpio_set_pin_input(HPM_GPIO0, GPIO_DO_GPIOA, 26);
+        if (!gpio_read_pin(HPM_GPIO0, GPIO_DO_GPIOA, 26)) {
+            printf("I2C1 CLK is low, please power cycle the board\n");
+            while (1) {
+            }
+        }
+        if (!gpio_read_pin(HPM_GPIO0, GPIO_DO_GPIOA, 25)) {
+            printf("I2C1 SDA is low, try to issue I2C bus clear\n");
+        } else {
+            return;
+        }
+
+        gpio_set_pin_output(HPM_GPIO0, GPIO_DO_GPIOA, 26);
+        while (1) {
+            for (uint32_t i = 0; i < 9; i++) {
+                gpio_write_pin(HPM_GPIO0, GPIO_DO_GPIOA, 26, 1);
+                board_delay_ms(10);
+                gpio_write_pin(HPM_GPIO0, GPIO_DO_GPIOA, 26, 0);
+                board_delay_ms(10);
+            }
+            board_delay_ms(100);
+        }
+        printf("I2C1 bus is cleared\n");
+
+    } else if (ptr == HPM_I2C2) {
+        gpio_set_pin_input(HPM_GPIO0, GPIO_DO_GPIOZ, 3);
+        gpio_set_pin_input(HPM_GPIO0, GPIO_DO_GPIOZ, 2);
+        if (!gpio_read_pin(HPM_GPIO0, GPIO_DO_GPIOZ, 2)) {
+            printf("I2C2 CLK is low, please power cycle the board\n");
+            while (1) {
+            }
+        }
+        if (!gpio_read_pin(HPM_GPIO0, GPIO_DO_GPIOZ, 3)) {
+            printf("I2C2 SDA is low, try to issue I2C bus clear\n");
+        } else {
+            return;
+        }
+
+        gpio_set_pin_output(HPM_GPIO0, GPIO_DO_GPIOZ, 2);
+        while (1) {
+            for (uint32_t i = 0; i < 9; i++) {
+                gpio_write_pin(HPM_GPIO0, GPIO_DO_GPIOZ, 2, 1);
+                board_delay_ms(10);
+                gpio_write_pin(HPM_GPIO0, GPIO_DO_GPIOZ, 2, 0);
+                board_delay_ms(10);
+            }
+            board_delay_ms(100);
+        }
+        printf("I2C2 bus is cleared\n");
     }
 }
 

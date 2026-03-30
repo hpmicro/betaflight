@@ -459,7 +459,7 @@ typedef struct afatfs_t {
     } initState;
 #endif
 
-#ifdef STM32H7
+#if defined(STM32H7) || defined(HPMicro)
     uint8_t *cache;
 #else
     __attribute__((aligned(32))) uint8_t cache[AFATFS_SECTOR_SIZE * AFATFS_NUM_CACHE_SECTORS];
@@ -513,7 +513,7 @@ typedef struct afatfs_t {
     uint32_t rootDirectorySectors; // Zero on FAT32, for FAT16 the number of sectors that the root directory occupies
 } afatfs_t;
 
-#ifdef STM32H7
+#if defined(STM32H7) || defined(HPMicro)
 static DMA_DATA_ZERO_INIT uint8_t afatfs_cache[AFATFS_SECTOR_SIZE * AFATFS_NUM_CACHE_SECTORS] __attribute__((aligned(32)));
 #endif
 
@@ -3637,7 +3637,7 @@ afatfsError_e afatfs_getLastError(void)
 
 void afatfs_init(void)
 {
-#ifdef STM32H7
+#if defined(STM32H7) || defined(HPMicro)
     afatfs.cache = afatfs_cache;
 #endif
     afatfs.filesystemState = AFATFS_FILESYSTEM_STATE_INITIALIZATION;

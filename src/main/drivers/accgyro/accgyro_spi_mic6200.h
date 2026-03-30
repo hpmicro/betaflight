@@ -20,25 +20,14 @@
 
 #pragma once
 
-#include "pg/pg.h"
+#include "drivers/bus.h"
 
-#ifdef STM32F411xE
-// Allow RX and OSD tasks to be scheduled at the second attempt on F411 processors
-#define SCHEDULER_RELAX_RX  1
-#define SCHEDULER_RELAX_OSD 1
-#else
-#define SCHEDULER_RELAX_RX  25
-#define SCHEDULER_RELAX_OSD 25
-#endif
+#define MPU_MIC6200_CONFIG          0x1A
 
-// Tenths of a % of tasks late
-#define CPU_LOAD_LATE_LIMIT 30
+#define GYRO_SCALE_FACTOR  0.00053292f  // (4/131) * pi/180   (32.75 LSB = 1 DPS)
 
-typedef struct schedulerConfig_s {
-    uint16_t rxRelaxDeterminism;
-    uint16_t osdRelaxDeterminism;
-    uint16_t cpuLatePercentageLimit;
-} schedulerConfig_t;
-
-PG_DECLARE(schedulerConfig_t, schedulerConfig);
-
+// RF = Register Flag
+#define MPU_RF_DATA_RDY_EN (1 << 0)
+uint8_t mic6200SpiDetect(const extDevice_t *dev);
+bool mic6200SpiAccDetect(accDev_t *acc);
+bool mic6200SpiGyroDetect(gyroDev_t *gyro);

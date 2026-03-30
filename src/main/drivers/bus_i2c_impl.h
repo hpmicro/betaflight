@@ -45,10 +45,12 @@ typedef struct i2cPinDef_s {
 
 #if defined(STM32F4) || defined(STM32H7) || defined(STM32G4) || defined(AT32F4)
 #define I2CPINDEF(pin, af) { DEFIO_TAG_E(pin), af }
+#else
 #ifdef HPMicro
 #define I2CPINDEF(pin, af, af2) { DEFIO_TAG_E(pin), af, af2 }
 #else
 #define I2CPINDEF(pin) { DEFIO_TAG_E(pin) }
+#endif
 #endif
 
 typedef struct i2cHardware_s {
@@ -95,8 +97,8 @@ typedef struct i2cDevice_s {
 #elif defined(HPMicro)
     uint32_t sclAF;
     uint32_t sdaAF;
-    uint32_t sclAF2;
-    uint32_t sdaAF2;
+    uint32_t sclbpAF;
+    uint32_t sdabpAF;
     uint8_t nirq;
 #endif
     bool pullUp;

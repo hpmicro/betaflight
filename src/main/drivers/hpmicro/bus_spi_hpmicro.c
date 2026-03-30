@@ -78,8 +78,8 @@ void spiInitDevice(SPIDevice device)
     spi_master_get_default_format_config(&format_config);
     format_config.common_config.data_len_in_bits = 8;
     format_config.common_config.mode = spi_master_mode;
-    format_config.common_config.cpol = spi_sclk_low_idle;
-    format_config.common_config.cpha = spi_sclk_sampling_odd_clk_edges;
+    format_config.common_config.cpol = spi_sclk_high_idle;
+    format_config.common_config.cpha = spi_sclk_sampling_even_clk_edges;
     spi_format_init((SPI_Type *)(spi->dev), &format_config);
 }
 
@@ -181,16 +181,14 @@ hpm_stat_t spi_tx_trigger_dma(DMA_Type *dma_ptr, uint8_t ch_num, SPI_Type *spi_p
     config.src_fixed = false;
     config.data_width = data_width;
     config.size_in_byte = size;
-    config.interrupt_mask = DMA_INTERRUPT_MASK_ALL;
+    config.interrupt_mask = DMA_INTERRUPT_MASK_NONE;
 
     return dma_setup_handshake_fixed(dma_ptr, &config, true);
 }
 
 hpm_stat_t spi_rx_trigger_dma(DMA_Type *dma_ptr, uint8_t ch_num, SPI_Type *spi_ptr, uint32_t dst, uint8_t data_width, uint32_t size)
 {
-    dma_handshake_config_t config;
-
-    dma_default_handshake_config(dma_ptr, &config);
+    dma_handshake_config_fixed_t config = { 0 };
     config.ch_index = ch_num;
     config.dst = dst;
     config.dst_fixed = false;
@@ -198,8 +196,9 @@ hpm_stat_t spi_rx_trigger_dma(DMA_Type *dma_ptr, uint8_t ch_num, SPI_Type *spi_p
     config.src_fixed = true;
     config.data_width = data_width;
     config.size_in_byte = size;
+    config.interrupt_mask = DMA_INTERRUPT_MASK_ALL;
 
-    return dma_setup_handshake(dma_ptr, &config, true);
+    return dma_setup_handshake_fixed(dma_ptr, &config, true);
 }
 
 void spiInternalStartDMA(const extDevice_t *dev)
@@ -218,17 +217,6 @@ void spiInternalStartDMA(const extDevice_t *dev)
         uint32_t aligned_size = aligned_end - aligned_start;
         l1c_dc_writeback(aligned_start, aligned_size);
     }
-    stat = spi_tx_trigger_dma(dmaTx->dma,
-                            (uint32_t)dmaTx->ref & 0xF,
-                            instance,
-                            core_local_mem_to_sys_address(HPM_CORE0, (uint32_t)bus->curSegment->u.buffers.txData),
-                            DMA_TRANSFER_WIDTH_BYTE,
-                            bus->curSegment->len);
-    if (stat != status_success) {
-        printf("spi tx trigger dma failed\n");
-        while (1) {
-        }
-    }
     stat = spi_rx_trigger_dma(dmaRx->dma,
                             (uint32_t)dmaRx->ref & 0xF,
                             instance,
@@ -237,6 +225,17 @@ void spiInternalStartDMA(const extDevice_t *dev)
                             bus->curSegment->len);
     if (stat != status_success) {
         printf("spi rx trigger dma failed\n");
+        while (1) {
+        }
+    }
+    stat = spi_tx_trigger_dma(dmaTx->dma,
+                            (uint32_t)dmaTx->ref & 0xF,
+                            instance,
+                            core_local_mem_to_sys_address(HPM_CORE0, (uint32_t)bus->curSegment->u.buffers.txData),
+                            DMA_TRANSFER_WIDTH_BYTE,
+                            bus->curSegment->len);
+    if (stat != status_success) {
+        printf("spi tx trigger dma failed\n");
         while (1) {
         }
     }

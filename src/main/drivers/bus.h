@@ -118,6 +118,11 @@ typedef struct extDevice_s {
     uint8_t *txBuf, *rxBuf;
     // Connected devices on the same bus may support different speeds
     uint32_t callbackArg;
+#ifdef USE_GYRO_SPI_MIC6200
+    int8_t sxz;
+    int8_t szx;
+    int sys_osc;
+#endif
 } extDevice_t;
 
 /* Each SPI access may comprise multiple parts, for example, wait/write enable/write/data each of which

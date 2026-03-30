@@ -70,6 +70,10 @@ const adcTagMap_t adcTagMap[] = {
     { DEFIO_TAG_E__PF6,  ADC_DEVICES_3,  16,  },
     { DEFIO_TAG_E__PF8,  ADC_DEVICES_3,  17,  },
 #endif
+#ifdef HPM6360
+    { DEFIO_TAG_E__PC15, ADC_DEVICES_1, 11, },
+    { DEFIO_TAG_E__PC16, ADC_DEVICES_1, 12, },
+#endif
 };
 
 int adcFindTagMapEntry(ioTag_t tag)
@@ -281,13 +285,13 @@ void adcGetChannelValues(void)
             if(status_success != adc12_get_prd_result(adc->ADCx, adcOperatingConfig[i].adcChannel, &result)) {
                 printf("Get ADC %d channel %d failed\n", adcOperatingConfig[i].adcDevice, adcOperatingConfig[i].adcChannel);
             } else {
-                adcValues[i] = result >> 4;
+                adcValues[i] = result;
             }
 #elif defined(HPM6360)
             if(status_success != adc16_get_prd_result(adc->ADCx, adcOperatingConfig[i].adcChannel, &result)) {
                 printf("Get ADC %d channel %d failed\n", adcOperatingConfig[i].adcDevice, adcOperatingConfig[i].adcChannel);
             } else {
-                adcValues[i] = result >> 8;
+                adcValues[i] = result >> 4;
             }
 #endif
         }

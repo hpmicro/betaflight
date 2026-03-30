@@ -25,7 +25,6 @@
 #undef USE_VTX_RTC6705
 #undef USE_DSHOT_TELEMETRY
 #undef USE_RANGEFINDER
-#undef USE_MAG
 #undef USE_RX_SX127X
 #undef USE_RX_SX1280
 #undef USE_RX_EXPRESSLRS
@@ -63,7 +62,6 @@
 #undef USE_ACC_MPU6050
 #undef USE_GYRO_MPU6050
 #undef USE_ACCGYRO_BMI160
-#undef USE_MAX7456
 #undef USE_PINIO
 #undef USE_SERVOS
 #undef USE_MULTI_GYRO
@@ -81,13 +79,13 @@
 #define FULL_TIMER_CHANNEL_COUNT 4
 #define USE_QUAD_MIXER_ONLY 1
 #define DEFAULT_CPU_OVERCLOCK 1
-#define DMA_RAM ATTR_ALIGN (64)
-#define DMA_RW_AXI ATTR_ALIGN (64)
-#define DMA_RAM_R ATTR_ALIGN (64)
-#define DMA_RAM_W ATTR_ALIGN (64)
-#define DMA_RAM_RW ATTR_ALIGN (64)
-#define DMA_DATA_ZERO_INIT ATTR_ALIGN (64)
-#define DMA_DATA ATTR_ALIGN (64)
+#define DMA_RAM ATTR_ALIGN (64) __attribute__((section(".noncacheable")))
+#define DMA_RW_AXI ATTR_ALIGN (64) __attribute__((section(".noncacheable")))
+#define DMA_RAM_R ATTR_ALIGN (64) __attribute__((section(".noncacheable")))
+#define DMA_RAM_W ATTR_ALIGN (64) __attribute__((section(".noncacheable")))
+#define DMA_RAM_RW ATTR_ALIGN (64) __attribute__((section(".noncacheable")))
+#define DMA_DATA_ZERO_INIT ATTR_ALIGN (64) __attribute__((section(".noncacheable.bss")))
+#define DMA_DATA ATTR_ALIGN (64) __attribute__((section(".noncacheable")))
 #define STATIC_DMA_DATA_AUTO static
 #define USE_64BIT_TIME
 #define EEPROM_SIZE 32768
@@ -98,6 +96,7 @@
 #define U_ID_2 2
 #define USE_EXTI
 #define USE_ADC
+#define USE_I2C
 #define USE_PERSISTENT_OBJECTS 1
 #define DEFAULT_VOLTAGE_METER_SOURCE VOLTAGE_METER_ADC
 #define TASK_GYROPID_DESIRED_PERIOD TASK_PERIOD_HZ (1000)

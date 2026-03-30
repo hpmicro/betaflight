@@ -278,7 +278,7 @@
 #define BOARD_APP_SPI_RX_DMA            HPM_DMA_SRC_SPI2_RX
 #define BOARD_APP_SPI_TX_DMA            HPM_DMA_SRC_SPI2_TX
 #define BOARD_SPI_CS_GPIO_CTRL          HPM_GPIO0
-#define BOARD_SPI_CS_PIN                IOC_PAD_PE31
+#define BOARD_SPI_CS_PIN                IOC_PAD_PA26
 #define BOARD_SPI_CS_ACTIVE_LEVEL       (0U)
 
 /* Flash section */

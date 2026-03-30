@@ -343,9 +343,17 @@ void initialiseD2MemorySections(void)
 
 static void unusedPinInit(IO_t io)
 {
+#ifndef HPMicro
     if (IOGetOwner(io) == OWNER_FREE) {
         IOConfigGPIO(io, IOCFG_IPU);
     }
+#else
+
+    HPM_IOC->PAD[IOC_PAD_PA16].FUNC_CTL = IOC_PA16_FUNC_CTL_GPIO_A_16;
+    HPM_IOC->PAD[IOC_PAD_PA17].FUNC_CTL = IOC_PA17_FUNC_CTL_GPIO_A_17;
+    HPM_IOC->PAD[IOC_PAD_PA18].FUNC_CTL = IOC_PA18_FUNC_CTL_GPIO_A_18;
+    HPM_IOC->PAD[IOC_PAD_PA19].FUNC_CTL = IOC_PA19_FUNC_CTL_GPIO_A_19;
+#endif
 }
 
 void unusedPinsInit(void)

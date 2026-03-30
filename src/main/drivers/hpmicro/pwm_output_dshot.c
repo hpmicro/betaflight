@@ -399,7 +399,7 @@ bool pwmDshotMotorHardwareConfig(const timerHardware_t *timerHardware, uint8_t m
     trgm_io_config.input = trg_resource->trgmux_in_pos;
     trgm_output_config(trg_resource->trgm_pos, trg_resource->trgmux_out_pos, &trgm_io_config);
 
-    if (trg_resource->trgm_ref && trg_resource->trgmux_in_ref && trg_resource->trgmux_out_ref) {
+    if ((trg_resource->trgm_ref != 0xFFFFFFFF) && (trg_resource->trgm_ref != 0) && trg_resource->trgmux_in_ref && trg_resource->trgmux_out_ref) {
         memset(&trgm_io_config, 0, sizeof(trgm_io_config));
         trgm_io_config.invert = 0;
         trgm_io_config.type = trgm_output_same_as_input;

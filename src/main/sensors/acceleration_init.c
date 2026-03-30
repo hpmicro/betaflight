@@ -306,6 +306,14 @@ retry:
         }
         FALLTHROUGH;
 #endif
+#ifdef USE_ACC_SPI_MIC6200
+    case ACC_MIC6200_SPI:
+        if (mic6200SpiAccDetect(dev)) {
+            accHardware = ACC_MIC6200_SPI;
+            break;
+        }
+        FALLTHROUGH;
+#endif
 
 #ifdef USE_ACCGYRO_BMI160
     case ACC_BMI160:

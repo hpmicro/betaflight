@@ -371,8 +371,7 @@ static void uartEndWrite(serialPort_t *instance)
         } else {
             if (uartPort->port.options & SERIAL_BIDIR) {
                 if (uart->tx.pin) {
-                    const uartHardware_t *hardware = uart->hardware;
-                    HPM_IOC->PAD[IO_IOC_INDEX(IOGetByTag(uart->tx.pin))].FUNC_CTL = hardware->af;
+                    HPM_IOC->PAD[IO_IOC_INDEX(IOGetByTag(uart->tx.pin))].FUNC_CTL = uart->tx.af;
                 }
                 if (uart->rx.pin) {
                     HPM_IOC->PAD[IO_IOC_INDEX(IOGetByTag(uart->rx.pin))].FUNC_CTL = 0;

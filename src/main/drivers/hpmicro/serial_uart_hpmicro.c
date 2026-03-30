@@ -20,6 +20,52 @@
 #include "drivers/serial_uart_impl.h"
 #include "hpm_clock_drv.h"
 #include "hpm_uart_drv.h"
+#include "hpm_gptmr_drv.h"
+
+typedef struct {
+    uartDevice_t *uart_list[8];
+    uint8_t head;
+    uint8_t tail;
+    uint8_t count;
+} uart_queue_t;
+
+static uart_queue_t uart_queue = {0};
+static bool gptmr_configured = false;
+
+static bool uart_queue_push(uartDevice_t *uart) {
+    if (uart_queue.count >= sizeof(uart_queue.uart_list) / sizeof(uart_queue.uart_list[0])) {
+        return false;
+    }
+    uart_queue.uart_list[uart_queue.tail] = uart;
+    uart_queue.tail = (uart_queue.tail + 1) % (sizeof(uart_queue.uart_list) / sizeof(uart_queue.uart_list[0]));
+    uart_queue.count++;
+    return true;
+}
+
+static uartDevice_t *uart_queue_pop(void) {
+    if (uart_queue.count == 0) {
+        return NULL;
+    }
+    uartDevice_t *uart = uart_queue.uart_list[uart_queue.head];
+    uart_queue.head = (uart_queue.head + 1) % (sizeof(uart_queue.uart_list) / sizeof(uart_queue.uart_list[0]));
+    uart_queue.count--;
+    return uart;
+}
+
+gptmr_channel_config_t config;
+static void timer_config(void)
+{
+    uint32_t gptmr_freq;
+
+    gptmr_freq = board_init_gptmr_clock(BOARD_GPTMR);
+    gptmr_channel_get_default_config(BOARD_GPTMR, &config);
+
+    config.reload = gptmr_freq / 1000;
+    gptmr_channel_config(BOARD_GPTMR, BOARD_GPTMR_CHANNEL, &config, false);
+    gptmr_start_counter(BOARD_GPTMR, BOARD_GPTMR_CHANNEL);
+
+    gptmr_enable_irq(BOARD_GPTMR, GPTMR_CH_RLD_IRQ_MASK(BOARD_GPTMR_CHANNEL));
+}
 
 uartPort_t *serialUART(UARTDevice_e device, uint32_t baudRate, portMode_e mode,
                portOptions_e options)
@@ -51,28 +97,33 @@ uartPort_t *serialUART(UARTDevice_e device, uint32_t baudRate, portMode_e mode,
     }
     if ((mode & MODE_TX) && uart->tx.pin) {
         HPM_IOC->PAD[IO_IOC_INDEX(IOGetByTag(uart->tx.pin))].FUNC_CTL =
-        hardware->af;
-        if (hardware->bioc_func) {
+        uart->tx.af;
+        if (uart->tx.baf) {
             HPM_BIOC->PAD[IO_IOC_INDEX(IOGetByTag(uart->tx.pin))].FUNC_CTL =
-            hardware->bioc_func;
+            uart->tx.baf;
         }
-        if (hardware->pioc_func) {
+        if (uart->tx.paf) {
             HPM_PIOC->PAD[IO_IOC_INDEX(IOGetByTag(uart->tx.pin))].FUNC_CTL =
-            hardware->pioc_func;
+            uart->tx.paf;
         }
     }
 
     if ((mode & MODE_RX) && uart->rx.pin) {
         HPM_IOC->PAD[IO_IOC_INDEX(IOGetByTag(uart->rx.pin))].FUNC_CTL =
-        hardware->af;
-        if (hardware->bioc_func) {
+        uart->rx.af;
+        if (uart->rx.baf) {
             HPM_BIOC->PAD[IO_IOC_INDEX(IOGetByTag(uart->rx.pin))].FUNC_CTL =
-            hardware->bioc_func;
+            uart->rx.baf;
         }
-        if (hardware->pioc_func) {
+        if (uart->rx.paf) {
             HPM_PIOC->PAD[IO_IOC_INDEX(IOGetByTag(uart->rx.pin))].FUNC_CTL =
-            hardware->pioc_func;
+            uart->rx.paf;
         }
+    }
+
+    if (!gptmr_configured) {
+        timer_config();
+        gptmr_configured = true;
     }
 
     return s;
@@ -501,6 +552,28 @@ const uartHardware_t uartHardware[UARTDEV_COUNT] = {
 };
 #endif
 
+SDK_DECLARE_EXT_ISR_M(BOARD_GPTMR_IRQ, tick_ms_isr)
+void tick_ms_isr(void)
+{
+    if (gptmr_check_status(BOARD_GPTMR, GPTMR_CH_RLD_STAT_MASK(BOARD_GPTMR_CHANNEL))) {
+        gptmr_clear_status(BOARD_GPTMR, GPTMR_CH_RLD_STAT_MASK(BOARD_GPTMR_CHANNEL));
+
+        uartDevice_t *uart = uart_queue_pop();
+        while (uart != NULL) {
+            if (uart->tx.pin) {
+                HPM_IOC->PAD[IO_IOC_INDEX(IOGetByTag(uart->tx.pin))].FUNC_CTL = 0;
+            }
+            if (uart->rx.pin) {
+                HPM_IOC->PAD[IO_IOC_INDEX(IOGetByTag(uart->rx.pin))].FUNC_CTL = uart->rx.af;
+            }
+            
+            uart = uart_queue_pop();
+        }
+        gptmr_stop_counter(BOARD_GPTMR, BOARD_GPTMR_CHANNEL);
+        intc_m_disable_irq(BOARD_GPTMR_IRQ);
+    }
+}
+
 void uartReconfigure(uartPort_t *uartPort)
 {
     hpm_stat_t stat;
@@ -563,15 +636,11 @@ void uart_isr(uartDevice_t *uart)
         } else {
             uart_disable_irq((UART_Type *)(s->USARTx), uart_intr_tx_slot_avail);
             if (s->port.options & SERIAL_BIDIR) {
-                if (uart->tx.pin) {
-                    HPM_IOC->PAD[IO_IOC_INDEX(IOGetByTag(uart->tx.pin))]
-                    .FUNC_CTL = 0;
-                }
-                if (uart->rx.pin) {
-                    const uartHardware_t *hardware = uart->hardware;
-                    HPM_IOC->PAD[IO_IOC_INDEX(IOGetByTag(uart->rx.pin))]
-                    .FUNC_CTL = hardware->af;
-                }
+               uart_queue_push(uart);
+               gptmr_channel_reset_count(BOARD_GPTMR, BOARD_GPTMR_CHANNEL);
+               gptmr_clear_status(BOARD_GPTMR, GPTMR_CH_RLD_STAT_MASK(BOARD_GPTMR_CHANNEL));
+               gptmr_start_counter(BOARD_GPTMR, BOARD_GPTMR_CHANNEL);
+               intc_m_enable_irq_with_priority(BOARD_GPTMR_IRQ, 1);
             }
         }
     }

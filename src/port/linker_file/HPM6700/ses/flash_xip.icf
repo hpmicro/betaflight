@@ -139,7 +139,7 @@ define access readonly { section .gcc_except_table, section .gcc_except_table.* 
 define access readonly { section .eh_frame, section .eh_frame.* };
 define access readonly { section .sdata.DW.* };
 
-place in ILM                              {
+place in ILM then AXI_SRAM                {
                                            section .fast, section .fast.*, section .text.*nx*,    // "ramfunc" section
                                           };
 

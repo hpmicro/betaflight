@@ -1,3 +1,7 @@
 [submodule "hpm_sdk"]
 	path = hpm_sdk
 	url = https://github.com/hpmicro/hpm_sdk.git
+[submodule "hpmicro"]
+	path = configs
+	url = https://github.com/hpmicro/config.git
+	branch = dev/hpmicro

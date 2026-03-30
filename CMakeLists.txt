@@ -49,6 +49,8 @@ sdk_compile_definitions(-D__REVISION__="0.1.0")
 sdk_compile_definitions(-DTARGET_FLASH_SIZE=16384)
 sdk_compile_definitions(-DDISABLE_IRQ_PREEMPTIVE=1)
 sdk_compile_definitions(-DHPM_SDMMC_HOST_ENABLE_IRQ=1)
+sdk_compile_definitions(-DHPM_SPI_DRV_DEFAULT_RETRY_COUNT=50000)
+
 
 sdk_ses_opt_debug_connection(J-Link)
 

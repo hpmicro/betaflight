@@ -613,7 +613,7 @@ void mic6200GyroInit(gyroDev_t *gyro)
     spiWriteRegMic6200(dev, MIC6200_RA_CTRL_OSR, 0x42);
     spiWriteRegMic6200(dev, MIC6200_RA_INT_GYRO_SRC, 0x80);
     spiWriteRegMic6200(dev, MIC6200_RA_CTRL_GYRO_OPT, 0x90);  //2000
-    spiWriteRegMic6200(dev, MIC6200_RA_CTRL_XL_OPT, 0x10);  //2G
+    spiWriteRegMic6200(dev, MIC6200_RA_CTRL_XL_OPT, 0x13);  //16G
     spiWriteRegMic6200(dev, MIC6200_RA_INT_XL_SRC, 0x20);
     spiWriteRegMic6200(dev, MIC6200_RA_INT_TEMP_SRC, 0x00);
 

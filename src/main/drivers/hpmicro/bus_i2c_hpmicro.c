@@ -251,7 +251,7 @@ void i2c_ev_handler(I2CDevice device)
 void i2cInit(I2CDevice device)
 {
     hpm_stat_t stat;
-    i2c_config_t config;
+    i2c_config_t config = {0};
     uint32_t freq;
     if (device == I2CINVALID)
         return;

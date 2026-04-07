@@ -44,9 +44,9 @@
 
 // ioTag_t accessor macros
 #ifdef HPMicro
-#define DEFIO_TAG_MAKE(gpioid, pin) ((ioTag_t)((((gpioid) + 0) << 8) | (pin)))
+#define DEFIO_TAG_MAKE(gpioid, pin) ((ioTag_t)((((gpioid) + 1) << 8) | (pin)))
 #define DEFIO_TAG_ISEMPTY(tag) (!(tag))
-#define DEFIO_TAG_GPIOID(tag) (((tag) >> 8))
+#define DEFIO_TAG_GPIOID(tag) (((tag) >> 8) - 1)
 #define DEFIO_TAG_PIN(tag) ((tag) & 0xff)
 #include "hpm_gpio_drv.h"
 #else

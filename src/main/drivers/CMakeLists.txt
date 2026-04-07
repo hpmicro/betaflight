@@ -10,36 +10,53 @@ add_subdirectory(hpmicro)
 add_subdirectory(rx)
 
 sdk_src(
-    inverter.c
     adc.c
-    dshot.c
-    dshot_command.c
-    dshot_dpwm.c
-    pwm_output_dshot_shared.c
     buf_writer.c
     bus.c
-    bus_i2c_config.c
     bus_i2c_busdev.c
-    bus_i2c_utils.c
+    bus_i2c_config.c
     bus_i2c_soft.c
+    bus_i2c_utils.c
     bus_octospi.c
     bus_quadspi.c
-    motor.c
     bus_spi.c
     bus_spi_config.c
     bus_spi_pinconfig.c
     buttons.c
+    dma_common.c
     display.c
     display_canvas.c
-    dma_common.c
+    display_ug2864hsweg01.c
+    dshot.c
+    dshot_command.c
+    dshot_dpwm.c
+    flash.c
+    flash_m25p16.c
+    flash_w25m.c
+    flash_w25q128fv.c
     io.c
+    inverter.c
     light_led.c
+    light_ws2811strip.c
+    max7456.c
     mco.c
-    pinio.c
+    motor.c
     pin_pull_up_down.c
+    pinio.c
+    pwm_output_dshot_shared.c
     resource.c
+    rx/expresslrs_driver.c
+    rx/rx_pwm.c
+    rx/rx_spi.c
+    rx/rx_xn297.c
+    sdcard.c
+    sdcard_sdio_baremetal.c
+    sdcard_spi.c
+    sdcard_standard.c
     serial.c
+    serial_escserial.c
     serial_pinconfig.c
+    serial_softserial.c
     serial_uart.c
     serial_uart_pinconfig.c
     sound_beeper.c
@@ -47,26 +64,10 @@ sdk_src(
     system.c
     timer_common.c
     transponder_ir_arcitimer.c
-    transponder_ir_ilap.c
     transponder_ir_erlt.c
-    rx/rx_spi.c
-    rx/rx_xn297.c
-    rx/rx_pwm.c
-    serial_softserial.c
-    display_ug2864hsweg01.c
-    light_ws2811strip.c
-    serial_escserial.c
+    transponder_ir_ilap.c
+    usb_msc_common.c
     vtx_common.c
     vtx_table.c
-    rx/expresslrs_driver.c
-    flash.c
-    flash_m25p16.c
-    flash_w25q128fv.c
-    flash_w25m.c
-    sdcard.c
-    sdcard_spi.c
-    sdcard_sdio_baremetal.c
-    sdcard_standard.c
-    usb_msc_common.c
-    max7456.c
+    vtx_rtc6705.c
 )

@@ -36,4 +36,8 @@ typedef ADC12_Type ADC_TypeDef;
 typedef ADC16_Type ADC_TypeDef;
 #endif
 #define RCC_ClocksTypeDef int
-
+typedef enum
+{ 
+  Bit_RESET = 0,
+  Bit_SET
+}BitAction;

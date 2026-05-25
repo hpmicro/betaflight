@@ -4012,7 +4012,8 @@ static mspResult_e mspProcessInCommand(mspDescriptor_t srcDesc, int16_t cmdMSP, 
             const uint8_t textType = sbufReadU8(src);
 
             char* textVar;
-            const uint8_t textLength = MIN(MAX_NAME_LENGTH, sbufReadU8(src));
+            const uint8_t dataLength = sbufReadU8(src);
+            const uint8_t textLength = MIN(MAX_NAME_LENGTH, dataLength);
             switch (textType) {
                 case MSP2TEXT_PILOT_NAME:
                     textVar = pilotConfigMutable()->pilotName;

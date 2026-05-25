@@ -54,6 +54,7 @@
 #define SPI_IO_AF_SCK_CFG_LOW   IO_CONFIG(1, 1, 1)
 #define SPI_IO_AF_SDI_CFG       IO_CONFIG(1, 1, 1)
 #define SPI_IO_CS_CFG           IO_CONFIG(1, 1, 1)
+#define SPI_IO_CS_HIGH_CFG      IOCFG_OUT_PP
 #endif
 
 // De facto standard mode

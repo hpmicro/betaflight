@@ -327,6 +327,10 @@ const uartHardware_t uartHardware[UARTDEV_COUNT] = {
             IO_TAG(PB27),
             .af = IOC_PB27_FUNC_CTL_UART2_RXD,
         },
+        {
+            IO_TAG(PC27),
+            .af = IOC_PC27_FUNC_CTL_UART2_RXD,
+        },
     },
     .txPins =
     {
@@ -337,6 +341,10 @@ const uartHardware_t uartHardware[UARTDEV_COUNT] = {
         {
             IO_TAG(PB26),
             .af = IOC_PB26_FUNC_CTL_UART2_TXD,
+        },
+        {
+            IO_TAG(PC26),
+            .af = IOC_PC26_FUNC_CTL_UART2_TXD,
         },
     },
     .rcc = UART3_CLOCK,

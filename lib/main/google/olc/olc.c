@@ -6,7 +6,8 @@
 #include "olc_private.h"
 
 #include "betaflight.h"
-
+#include "stdio.h"
+#include "board.h"
 #define CORRECT_IF_SEPARATOR(var, info)      \
   do {                                       \
     (var) += (info)->sep_first >= 0 ? 1 : 0; \

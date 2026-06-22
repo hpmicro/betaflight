@@ -91,7 +91,7 @@
 #define UARTDEV_COUNT_MAX       9  // UARTs 1 to 5 + LPUART1 (index 9)
 #define UARTHARDWARE_MAX_PINS   5
 #ifndef UART_RX_BUFFER_SIZE
-#define UART_RX_BUFFER_SIZE     256
+#define UART_RX_BUFFER_SIZE     2048
 #endif
 #ifndef UART_TX_BUFFER_SIZE
 #ifdef USE_MSP_DISPLAYPORT

@@ -26,6 +26,8 @@
 #include "hpm_romapi.h"
 #include "board.h"
 
+#define USE_DYN_NOTCH_FILTER
+
 #define ADC1                             ((ADC_TypeDef *) HPM_ADC0)
 #define ADC2                             ((ADC_TypeDef *) HPM_ADC1)
 #define ADC3                             ((ADC_TypeDef *) HPM_ADC2)

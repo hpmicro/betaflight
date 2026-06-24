@@ -35,8 +35,8 @@
 
 // These three constants are times in timer clock ticks, e.g. with a 6 MHz clock 20 ticks for bitlength = 300kHz bit rate
 #ifdef HPMicro
-#define MOTOR_BIT_0           ((450 * dshot_duty_count / 1667) << 4)
-#define MOTOR_BIT_1           ((1150 * dshot_duty_count / 1667) << 4)
+#define MOTOR_BIT_0           ((590 * dshot_duty_count / 1667) << 4)
+#define MOTOR_BIT_1           ((1167 * dshot_duty_count / 1667) << 4)
 #define MOTOR_TELEMETRY_BIT_WIDTH (dshot_telemetry_bit_width)
 #endif
 #define MOTOR_BITLENGTH       20

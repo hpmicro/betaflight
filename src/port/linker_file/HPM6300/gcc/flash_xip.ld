@@ -7,10 +7,14 @@ ENTRY(_start)
 
 STACK_SIZE = _stack_size;
 HEAP_SIZE = _heap_size;
+__config_start = ORIGIN(XPI_CFG);
+__config_end = ORIGIN(XPI_CFG) + LENGTH(XPI_CFG);
+_Min_Stack_Size = 16k;
 
 MEMORY
 {
-    FLASH (rx) : ORIGIN = 0x80000000, LENGTH = _flash_size
+    FLASH (rx) : ORIGIN = 0x80000000, LENGTH = _flash_size - 32k
+    XPI_CFG (wr) : ORIGIN = 0x80000000 + _flash_size - 32k, LENGTH = 32K
     ILM (wx) : ORIGIN = 0x00000000, LENGTH = 128K
     DLM (w) : ORIGIN = 0x00080000, LENGTH = 128K
     AXI_SRAM (wx) : ORIGIN = 0x01080000, LENGTH = 256K
@@ -81,6 +85,19 @@ SECTIONS
         __usbh_class_info_start__ = .;
         KEEP(*(.usbh_class_info))
         __usbh_class_info_end__ = .;
+        . = ALIGN(8);
+        __pg_registry_start = .;
+        KEEP(*(.pg_registry))
+        KEEP(*(.pg_registry.*))
+        __pg_registry_end = .;
+        . = ALIGN(8);
+
+        . = ALIGN(8);
+        __pg_resetdata_start = .;
+        KEEP(*(.pg_resetdata))
+        KEEP(*(.pg_resetdata.*))
+        __pg_resetdata_end = .;
+        . = ALIGN(8);
 
         /* RT-Thread related sections - Start */
         /* section information for finsh shell */
@@ -303,6 +320,7 @@ SECTIONS
         . = ALIGN(16);
         PROVIDE (_stack = .);
         PROVIDE (_stack_safe = .);
+        PROVIDE (_estack = .);
     } > DLM
 
     __noncacheable_start__ = ORIGIN(AXI_SRAM_NONCACHEABLE);

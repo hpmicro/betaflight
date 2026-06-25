@@ -41,7 +41,9 @@ void pwmOutConfig(timerChannel_t *channel, const timerHardware_t *timerHardware,
                   uint8_t inversion)
 {
     (void)value;
+    trgm_output_t trgm_io_config = {0};
 #if defined(HPMSOC_HAS_HPMSDK_PWM)
+    pwm_stop_counter(timerHardware->tim);
     uint32_t reload = 0;
     uint32_t freq;
     pwm_config_t pwm_config = {0};
@@ -64,7 +66,7 @@ void pwmOutConfig(timerChannel_t *channel, const timerHardware_t *timerHardware,
      */
     cmp_config.mode = pwm_cmp_mode_output_compare;
     cmp_config.cmp = reload + 1;
-    cmp_config.update_trigger = pwm_shadow_register_update_on_hw_event;
+    cmp_config.update_trigger = pwm_shadow_register_update_on_modify;
     /*
      * config pwm as output driven by cmp
      */
@@ -77,6 +79,8 @@ void pwmOutConfig(timerChannel_t *channel, const timerHardware_t *timerHardware,
         while (1)
             ;
     }
+    cmp_config.cmp = reload << 1;
+    pwm_load_cmp_shadow_on_match(timerHardware->tim, 23, &cmp_config);
     pwm_start_counter(timerHardware->tim);
     pwm_issue_shadow_register_lock_event(timerHardware->tim);
 
@@ -84,7 +88,13 @@ void pwmOutConfig(timerChannel_t *channel, const timerHardware_t *timerHardware,
 
     channel->tim = timerHardware->tim;
 
-    *channel->ccr = PWM_CMP_CMP_SET(reload + 1);
+    *channel->ccr = PWM_CMP_CMP_SET(reload / 2);
+    memset(&trgm_io_config, 0, sizeof(trgm_io_config));
+    trgm_io_config.invert = 0;
+    trgm_io_config.type = trgm_output_same_as_input;
+    trgm_io_config.input = timerHardware->pwm_out_trgm_src;
+    trgm_output_config(timerHardware->pwm_trgm.trgm, timerHardware->pwm_out_trgm_dst, &trgm_io_config);
+    trgm_enable_io_output(timerHardware->pwm_trgm.trgm, 1 << (timerHardware->trgm_port_idx));
 #endif
 }
 
@@ -247,13 +257,25 @@ motorDevice_t *motorPwmDevInit(const motorDevConfig_t *motorConfig,
             TODO: this can be moved back to periodMin and periodLen
             once mixer outputs a 0..1 float value.
         */
-        motors[motorIndex].pulseScale =
-            ((motorConfig->motorPwmProtocol == PWM_TYPE_BRUSHED)
-                 ? period
-                 : (sLen * hz)) /
-            1000.0f;
-        motors[motorIndex].pulseOffset =
-            (sMin * hz) - (motors[motorIndex].pulseScale * 1000);
+        /*
+         * HPM PWM output compare mode (non-inverted):
+         *   HIGH time = reload - CMP
+         * The PWM counter runs at the source clock frequency (clock), so all
+         * CMP values must be in source-clock ticks, NOT prescaled hz ticks.
+         * We want HIGH time = desired_pulse_seconds, so:
+         *   CMP = reload - desired_pulse_ticks
+         * desired_pulse_ticks = clock * (sMin + sLen * (value - 1000) / 1000)
+         *   = clock*sMin + (clock*sLen/1000)*value - clock*sLen
+         * CMP = reload + clock*(sLen - sMin) - (clock*sLen/1000)*value
+         */
+        const uint32_t reload = (clock / hz) * period - 1;
+        if (motorConfig->motorPwmProtocol == PWM_TYPE_BRUSHED) {
+            motors[motorIndex].pulseScale = period / 1000.0f;
+            motors[motorIndex].pulseOffset = 0 - (motors[motorIndex].pulseScale * 1000);
+        } else {
+            motors[motorIndex].pulseScale = -(sLen * clock) / 1000.0f;
+            motors[motorIndex].pulseOffset = (float)reload + clock * (sLen - sMin);
+        }
 
         pwmOutConfig(&motors[motorIndex].channel, timerHardware, hz, period,
                      idlePulse, motorConfig->motorPwmInversion);

@@ -23,6 +23,7 @@
 #include "build/debug.h"
 #include "drivers/system.h"
 #include "hpm_ppor_drv.h"
+#include "hpm_dfu_trigger.h"
 extern void cycleCounterInit(void);
 
 void c_startup(void)
@@ -111,7 +112,7 @@ void c_startup(void)
 void systemResetToBootloader(bootloaderRequestType_e requestType)
 {
     (void)requestType;
-    ppor_sw_reset(HPM_PPOR, 10);
+    hpm_dfu_reboot_to_dfu();
 }
 
 bool isMPUSoftReset(void)

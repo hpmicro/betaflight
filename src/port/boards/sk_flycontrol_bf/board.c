@@ -82,6 +82,9 @@ __attribute__ ((section(".nor_cfg_option"), used)) const uint32_t option[4] = {0
 #if defined(FLASH_UF2) && FLASH_UF2
 ATTR_PLACE_AT(".uf2_signature") __attribute__((used)) const uint32_t uf2_signature = BOARD_UF2_SIGNATURE;
 #endif
+#if defined(FLASH_DFU) && FLASH_DFU
+ATTR_PLACE_AT(".dfu_signature") __attribute__((used)) const uint32_t dfu_signature = BOARD_DFU_SIGNATURE;
+#endif
 
 void board_init_console(void)
 {

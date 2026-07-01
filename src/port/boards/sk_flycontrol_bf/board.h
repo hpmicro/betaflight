@@ -19,6 +19,7 @@
 #endif
 
 #define BOARD_UF2_SIGNATURE (0x0A4D5048UL)
+#define BOARD_DFU_SIGNATURE (0x48504D21UL)
 
 #ifndef BOARD_RUNNING_CORE
 #define BOARD_RUNNING_CORE HPM_CORE0
@@ -120,7 +121,7 @@
 
 /* nor flash section */
 #define BOARD_FLASH_BASE_ADDRESS (0x80000000UL)
-#define BOARD_FLASH_SIZE         (16 * SIZE_1MB)
+#define BOARD_FLASH_SIZE         (4 * SIZE_1MB)
 
 /* i2c section */
 #define BOARD_APP_I2C_BASE       HPM_I2C0

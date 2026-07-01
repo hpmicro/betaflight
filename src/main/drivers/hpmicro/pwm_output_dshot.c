@@ -318,11 +318,11 @@ bool pwmDshotMotorHardwareConfig(const timerHardware_t *timerHardware, uint8_t m
     if (output & TIMER_OUTPUT_N_CHANNEL) {
         pwm_get_default_pwm_pair_config(timer, &cmp_pair_config);
         cmp_pair_config.pwm[0].invert_output = (output & TIMER_OUTPUT_INVERTED) ? false : true;
-        cmp_pair_config.pwm[0].update_trigger = pwm_shadow_register_update_on_modify;
+        cmp_pair_config.pwm[0].force_cmd_shadow_update_trigger = pwm_shadow_register_update_on_modify;
         cmp_pair_config.pwm[0].enable_output = true;
     } else {
         pwm_get_default_pwm_config(timer, &pwm_config);
-        pwm_config.update_trigger = pwm_shadow_register_update_on_hw_event;
+        pwm_config.force_cmd_shadow_update_trigger = pwm_shadow_register_update_on_hw_event;
         pwm_config.enable_output = true;
         pwm_config.dead_zone_in_half_cycle = 0;
         pwm_config.invert_output = (output & TIMER_OUTPUT_INVERTED) ? false : true;

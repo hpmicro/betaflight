@@ -299,11 +299,17 @@ static void uartWrite(serialPort_t *instance, uint8_t ch)
 #elif defined(USE_ATBSP_DRIVER)
         usart_interrupt_enable(uartPort->USARTx, USART_TDBE_INT, TRUE);
 #elif defined(HPMicro)
-        uart_write_byte(uartPort->USARTx, uartPort->port.txBuffer[uartPort->port.txBufferTail]);
-        uartPort->port.txBufferTail = (uartPort->port.txBufferTail + 1) % uartPort->port.txBufferSize;
-        if (uartPort->port.txBufferTail != uartPort->port.txBufferHead) {
-            uart_enable_irq(uartPort->USARTx, uart_intr_tx_slot_avail);
+        const uint32_t irqState = disable_global_irq(CSR_MSTATUS_MIE_MASK);
+        if (uart_get_enabled_irq(uartPort->USARTx) & uart_intr_tx_slot_avail) {
+            enable_global_irq(irqState);
+            return;
         }
+        uart_enable_irq(uartPort->USARTx, uart_intr_tx_slot_avail);
+        if (uart_send_byte(uartPort->USARTx, uartPort->port.txBuffer[uartPort->port.txBufferTail]) == status_success) {
+            uartPort->port.txBufferTail = (uartPort->port.txBufferTail + 1) % uartPort->port.txBufferSize;
+        }
+
+        enable_global_irq(irqState);
 #else
         USART_ITConfig(uartPort->USARTx, USART_IT_TXE, ENABLE);
 #endif

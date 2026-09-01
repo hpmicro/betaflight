@@ -82,7 +82,10 @@
 #endif
 
 /* move msc read & write from isr to while(1), you should call usbd_msc_polling in while(1) */
-/* #define CONFIG_USBDEV_MSC_POLLING */
+/* Required: the sdmmc middleware runs in IRQ mode (HPM_SDMMC_HOST_ENABLE_IRQ=1), so blocking
+ * sd_read_blocks/sd_write_blocks can only complete when the SDXC IRQ is serviced. Running them
+ * inside the USB ISR (with global IRQs masked) would time out on every sector access. */
+#define CONFIG_USBDEV_MSC_POLLING
 
 /* move msc read & write from isr to thread */
 /* #define CONFIG_USBDEV_MSC_THREAD */

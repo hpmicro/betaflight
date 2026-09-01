@@ -122,11 +122,22 @@ bool mscCheckButton(void)
 
 void mscWaitForButton(void)
 {
+#ifdef HPMicro
+    /* CONFIG_USBDEV_MSC_POLLING moves the SD sector accesses out of the USB ISR
+     * into this loop, where the SDXC IRQ can be serviced to complete them. */
+    extern void usbd_msc_polling(uint8_t busid);
+#endif
     // In order to exit MSC mode simply disconnect the board, or push the button again.
-    while (mscCheckButton());
+    while (mscCheckButton()) {
+#ifdef HPMicro
+        usbd_msc_polling(0);
+#endif
+    }
     delay(DEBOUNCE_TIME_MS);
     while (true) {
-        asm("NOP");
+#ifdef HPMicro
+        usbd_msc_polling(0);
+#endif
         if (mscCheckButton()) {
             systemResetFromMsc();
         }

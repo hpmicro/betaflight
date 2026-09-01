@@ -243,203 +243,52 @@ void HAL_SD_AbortCallback(sd_card_t *card)
   */
 SD_Error_t SD_GetCardInfo(void)
 {
-    SD_Error_t ErrorState = SD_OK;
-
-    // fill in SD_CardInfo
-
-    uint32_t Temp = 0;
-
-    // Byte 0
-    Temp = (SD_Handle.CSD[0] & 0xFF000000) >> 24;
-    SD_CardInfo.SD_csd.CSDStruct      = (uint8_t)((Temp & 0xC0) >> 6);
-    SD_CardInfo.SD_csd.SysSpecVersion = (uint8_t)((Temp & 0x3C) >> 2);
-    SD_CardInfo.SD_csd.Reserved1      = Temp & 0x03;
-
-    // Byte 1
-    Temp = (SD_Handle.CSD[0] & 0x00FF0000) >> 16;
-    SD_CardInfo.SD_csd.TAAC = (uint8_t)Temp;
-
-    // Byte 2
-    Temp = (SD_Handle.CSD[0] & 0x0000FF00) >> 8;
-    SD_CardInfo.SD_csd.NSAC = (uint8_t)Temp;
-
-    // Byte 3
-    Temp = SD_Handle.CSD[0] & 0x000000FF;
-    SD_CardInfo.SD_csd.MaxBusClkFrec = (uint8_t)Temp;
-
-    // Byte 4
-    Temp = (SD_Handle.CSD[1] & 0xFF000000) >> 24;
-    SD_CardInfo.SD_csd.CardComdClasses = (uint16_t)(Temp << 4);
-
-    // Byte 5
-    Temp = (SD_Handle.CSD[1] & 0x00FF0000) >> 16;
-    SD_CardInfo.SD_csd.CardComdClasses |= (uint16_t)((Temp & 0xF0) >> 4);
-    SD_CardInfo.SD_csd.RdBlockLen       = (uint8_t)(Temp & 0x0F);
-
-    // Byte 6
-    Temp = (SD_Handle.CSD[1] & 0x0000FF00) >> 8;
-    SD_CardInfo.SD_csd.PartBlockRead   = (uint8_t)((Temp & 0x80) >> 7);
-    SD_CardInfo.SD_csd.WrBlockMisalign = (uint8_t)((Temp & 0x40) >> 6);
-    SD_CardInfo.SD_csd.RdBlockMisalign = (uint8_t)((Temp & 0x20) >> 5);
-    SD_CardInfo.SD_csd.DSRImpl         = (uint8_t)((Temp & 0x10) >> 4);
-    SD_CardInfo.SD_csd.Reserved2       = 0; /*!< Reserved */
-
-    if((SD_CardType == SD_STD_CAPACITY_V1_1) || (SD_CardType == SD_STD_CAPACITY_V2_0)) {
-        SD_CardInfo.SD_csd.DeviceSize = (Temp & 0x03) << 10;
-
-        // Byte 7
-        Temp = (uint8_t)(SD_Handle.CSD[1] & 0x000000FF);
-        SD_CardInfo.SD_csd.DeviceSize |= (Temp) << 2;
-
-        // Byte 8
-        Temp = (uint8_t)((SD_Handle.CSD[2] & 0xFF000000) >> 24);
-        SD_CardInfo.SD_csd.DeviceSize |= (Temp & 0xC0) >> 6;
-
-        SD_CardInfo.SD_csd.MaxRdCurrentVDDMin = (Temp & 0x38) >> 3;
-        SD_CardInfo.SD_csd.MaxRdCurrentVDDMax = (Temp & 0x07);
-
-        // Byte 9
-        Temp = (uint8_t)((SD_Handle.CSD[2] & 0x00FF0000) >> 16);
-        SD_CardInfo.SD_csd.MaxWrCurrentVDDMin = (Temp & 0xE0) >> 5;
-        SD_CardInfo.SD_csd.MaxWrCurrentVDDMax = (Temp & 0x1C) >> 2;
-        SD_CardInfo.SD_csd.DeviceSizeMul      = (Temp & 0x03) << 1;
-
-        // Byte 10
-        Temp = (uint8_t)((SD_Handle.CSD[2] & 0x0000FF00) >> 8);
-        SD_CardInfo.SD_csd.DeviceSizeMul |= (Temp & 0x80) >> 7;
-
-        SD_CardInfo.CardCapacity  = (SD_CardInfo.SD_csd.DeviceSize + 1) ;
-        SD_CardInfo.CardCapacity *= (1 << (SD_CardInfo.SD_csd.DeviceSizeMul + 2));
-        SD_CardInfo.CardBlockSize = 1 << (SD_CardInfo.SD_csd.RdBlockLen);
-        SD_CardInfo.CardCapacity = SD_CardInfo.CardCapacity * SD_CardInfo.CardBlockSize / 512; // In 512 byte blocks
-    } else if(SD_CardType == SD_HIGH_CAPACITY) {
-        // Byte 7
-        Temp = (uint8_t)(SD_Handle.CSD[1] & 0x000000FF);
-        SD_CardInfo.SD_csd.DeviceSize = (Temp & 0x3F) << 16;
-
-        // Byte 8
-        Temp = (uint8_t)((SD_Handle.CSD[2] & 0xFF000000) >> 24);
-
-        SD_CardInfo.SD_csd.DeviceSize |= (Temp << 8);
-
-        // Byte 9
-        Temp = (uint8_t)((SD_Handle.CSD[2] & 0x00FF0000) >> 16);
-
-        SD_CardInfo.SD_csd.DeviceSize |= (Temp);
-
-        // Byte 10
-        Temp = (uint8_t)((SD_Handle.CSD[2] & 0x0000FF00) >> 8);
-
-        SD_CardInfo.CardCapacity  = ((uint64_t)SD_CardInfo.SD_csd.DeviceSize + 1) * 1024;
-        SD_CardInfo.CardBlockSize = 512;
-    } else {
-        // Not supported card type
-        ErrorState = SD_ERROR;
-    }
-
-    SD_CardInfo.SD_csd.EraseGrSize = (Temp & 0x40) >> 6;
-    SD_CardInfo.SD_csd.EraseGrMul  = (Temp & 0x3F) << 1;
-
-    // Byte 11
-    Temp = (uint8_t)(SD_Handle.CSD[2] & 0x000000FF);
-    SD_CardInfo.SD_csd.EraseGrMul     |= (Temp & 0x80) >> 7;
-    SD_CardInfo.SD_csd.WrProtectGrSize = (Temp & 0x7F);
-
-    // Byte 12
-    Temp = (uint8_t)((SD_Handle.CSD[3] & 0xFF000000) >> 24);
-    SD_CardInfo.SD_csd.WrProtectGrEnable = (Temp & 0x80) >> 7;
-    SD_CardInfo.SD_csd.ManDeflECC        = (Temp & 0x60) >> 5;
-    SD_CardInfo.SD_csd.WrSpeedFact       = (Temp & 0x1C) >> 2;
-    SD_CardInfo.SD_csd.MaxWrBlockLen     = (Temp & 0x03) << 2;
-
-    // Byte 13
-    Temp = (uint8_t)((SD_Handle.CSD[3] & 0x00FF0000) >> 16);
-    SD_CardInfo.SD_csd.MaxWrBlockLen      |= (Temp & 0xC0) >> 6;
-    SD_CardInfo.SD_csd.WriteBlockPaPartial = (Temp & 0x20) >> 5;
-    SD_CardInfo.SD_csd.Reserved3           = 0;
-    SD_CardInfo.SD_csd.ContentProtectAppli = (Temp & 0x01);
-
-    // Byte 14
-    Temp = (uint8_t)((SD_Handle.CSD[3] & 0x0000FF00) >> 8);
-    SD_CardInfo.SD_csd.FileFormatGrouop = (Temp & 0x80) >> 7;
-    SD_CardInfo.SD_csd.CopyFlag         = (Temp & 0x40) >> 6;
-    SD_CardInfo.SD_csd.PermWrProtect    = (Temp & 0x20) >> 5;
-    SD_CardInfo.SD_csd.TempWrProtect    = (Temp & 0x10) >> 4;
-    SD_CardInfo.SD_csd.FileFormat       = (Temp & 0x0C) >> 2;
-    SD_CardInfo.SD_csd.ECC              = (Temp & 0x03);
-
-    // Byte 15
-    Temp = (uint8_t)(SD_Handle.CSD[3] & 0x000000FF);
-    SD_CardInfo.SD_csd.CSD_CRC   = (Temp & 0xFE) >> 1;
-    SD_CardInfo.SD_csd.Reserved4 = 1;
-
-    // Byte 0
-    Temp = (uint8_t)((SD_Handle.CID[0] & 0xFF000000) >> 24);
-    SD_CardInfo.SD_cid.ManufacturerID = Temp;
-
-    // Byte 1
-    Temp = (uint8_t)((SD_Handle.CID[0] & 0x00FF0000) >> 16);
-    SD_CardInfo.SD_cid.OEM_AppliID = Temp << 8;
-
-    // Byte 2
-    Temp = (uint8_t)((SD_Handle.CID[0] & 0x000000FF00) >> 8);
-    SD_CardInfo.SD_cid.OEM_AppliID |= Temp;
-
-    // Byte 3
-    Temp = (uint8_t)(SD_Handle.CID[0] & 0x000000FF);
-    SD_CardInfo.SD_cid.ProdName1 = Temp << 24;
-
-    // Byte 4
-    Temp = (uint8_t)((SD_Handle.CID[1] & 0xFF000000) >> 24);
-    SD_CardInfo.SD_cid.ProdName1 |= Temp << 16;
-
-    // Byte 5
-    Temp = (uint8_t)((SD_Handle.CID[1] & 0x00FF0000) >> 16);
-    SD_CardInfo.SD_cid.ProdName1 |= Temp << 8;
-
-    // Byte 6
-    Temp = (uint8_t)((SD_Handle.CID[1] & 0x0000FF00) >> 8);
-    SD_CardInfo.SD_cid.ProdName1 |= Temp;
-
-    // Byte 7
-    Temp = (uint8_t)(SD_Handle.CID[1] & 0x000000FF);
-    SD_CardInfo.SD_cid.ProdName2 = Temp;
-
-    // Byte 8
-    Temp = (uint8_t)((SD_Handle.CID[2] & 0xFF000000) >> 24);
-    SD_CardInfo.SD_cid.ProdRev = Temp;
-
-    // Byte 9
-    Temp = (uint8_t)((SD_Handle.CID[2] & 0x00FF0000) >> 16);
-    SD_CardInfo.SD_cid.ProdSN = Temp << 24;
-
-    // Byte 10
-    Temp = (uint8_t)((SD_Handle.CID[2] & 0x0000FF00) >> 8);
-    SD_CardInfo.SD_cid.ProdSN |= Temp << 16;
-
-    // Byte 11
-    Temp = (uint8_t)(SD_Handle.CID[2] & 0x000000FF);
-    SD_CardInfo.SD_cid.ProdSN |= Temp << 8;
-
-    // Byte 12
-    Temp = (uint8_t)((SD_Handle.CID[3] & 0xFF000000) >> 24);
-    SD_CardInfo.SD_cid.ProdSN |= Temp;
-
-    // Byte 13
-    Temp = (uint8_t)((SD_Handle.CID[3] & 0x00FF0000) >> 16);
-    SD_CardInfo.SD_cid.Reserved1   |= (Temp & 0xF0) >> 4;
-    SD_CardInfo.SD_cid.ManufactDate = (Temp & 0x0F) << 8;
-
-    // Byte 14
-    Temp = (uint8_t)((SD_Handle.CID[3] & 0x0000FF00) >> 8);
-    SD_CardInfo.SD_cid.ManufactDate |= Temp;
-
-    // Byte 15
-    Temp = (uint8_t)(SD_Handle.CID[3] & 0x000000FF);
-    SD_CardInfo.SD_cid.CID_CRC   = (Temp & 0xFE) >> 1;
+    /* The SDK keeps the CID/CSD in decoded form (sd_cid_t bitfields /
+     * sd_csd_t fields), so map those directly instead of parsing raw
+     * register words the way the STM32 implementation does. */
+    SD_CardInfo.SD_cid.ManufacturerID = g_sd.cid.mid;
+    SD_CardInfo.SD_cid.OEM_AppliID = g_sd.cid.oid;
+    SD_CardInfo.SD_cid.ProdName1 = (uint32_t) (g_sd.cid.pnm >> 8);
+    SD_CardInfo.SD_cid.ProdName2 = (uint8_t) (g_sd.cid.pnm & 0xFF);
+    SD_CardInfo.SD_cid.ProdRev = g_sd.cid.prv;
+    SD_CardInfo.SD_cid.ProdSN = g_sd.cid.psn;
+    SD_CardInfo.SD_cid.Reserved1 = 0;
+    SD_CardInfo.SD_cid.ManufactDate = g_sd.cid.mdt;
+    SD_CardInfo.SD_cid.CID_CRC = g_sd.cid.crc7;
     SD_CardInfo.SD_cid.Reserved2 = 1;
 
-    return ErrorState;
+    SD_CardInfo.SD_csd.CSDStruct = g_sd.csd.csd_structure;
+    SD_CardInfo.SD_csd.TAAC = g_sd.csd.data_read_access_time1;
+    SD_CardInfo.SD_csd.NSAC = g_sd.csd.data_read_access_time2;
+    SD_CardInfo.SD_csd.MaxBusClkFrec = g_sd.csd.transfer_speed;
+    SD_CardInfo.SD_csd.CardComdClasses = g_sd.csd.card_command_class;
+    SD_CardInfo.SD_csd.RdBlockLen = (uint8_t) g_sd.csd.read_block_len;
+    SD_CardInfo.SD_csd.PartBlockRead = g_sd.csd.support_read_block_partial;
+    SD_CardInfo.SD_csd.WrBlockMisalign = g_sd.csd.support_write_block_misalignment;
+    SD_CardInfo.SD_csd.RdBlockMisalign = g_sd.csd.support_read_block_misalignment;
+    SD_CardInfo.SD_csd.DSRImpl = g_sd.csd.is_dsr_implemented;
+    SD_CardInfo.SD_csd.DeviceSize = g_sd.csd.device_size;
+    SD_CardInfo.SD_csd.MaxRdCurrentVDDMin = g_sd.csd.read_current_vdd_min;
+    SD_CardInfo.SD_csd.MaxRdCurrentVDDMax = g_sd.csd.read_current_vdd_max;
+    SD_CardInfo.SD_csd.MaxWrCurrentVDDMin = g_sd.csd.write_current_vdd_min;
+    SD_CardInfo.SD_csd.MaxWrCurrentVDDMax = g_sd.csd.write_current_vdd_max;
+    SD_CardInfo.SD_csd.DeviceSizeMul = g_sd.csd.device_size_multiplier;
+    SD_CardInfo.SD_csd.WrSpeedFact = g_sd.csd.write_speed_factor;
+    SD_CardInfo.SD_csd.MaxWrBlockLen = (uint8_t) g_sd.csd.max_write_block_len;
+    SD_CardInfo.SD_csd.WriteBlockPaPartial = g_sd.csd.support_write_block_partial;
+    SD_CardInfo.SD_csd.WrProtectGrEnable = g_sd.csd.is_write_protection_group_enabled;
+    SD_CardInfo.SD_csd.FileFormatGrouop = g_sd.csd.support_file_format_group;
+    SD_CardInfo.SD_csd.CopyFlag = g_sd.csd.support_copy;
+    SD_CardInfo.SD_csd.PermWrProtect = g_sd.csd.support_permanent_write_protect;
+    SD_CardInfo.SD_csd.TempWrProtect = g_sd.csd.support_temporary_write_protect;
+    SD_CardInfo.SD_csd.FileFormat = g_sd.csd.file_format;
+    /* No decoded counterparts: SysSpecVersion, EraseGrSize/EraseGrMul,
+     * WrProtectGrSize, ManDeflECC, ECC, CSD_CRC and the Reserved fields stay
+     * zero. Common code only reads SD_cid, CardCapacity and CardBlockSize. */
+
+    SD_CardInfo.CardCapacity = g_sd.block_count;
+    SD_CardInfo.CardBlockSize = g_sd.block_size;
+    return SD_OK;
 }
 
 /** -----------------------------------------------------------------------------------------------------------------*/
